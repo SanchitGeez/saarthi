@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Saarthi",
+    "slug": "saarthi",
+    "scheme": "saarthi",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.saarthi.companion",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Record a voice note to share with Saarthi. The app sends it for transcription and does not save the audio."
+      }
+    },
+    "android": {
+      "package": "com.saarthi.companion",
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Record a voice note to share with Saarthi. The app sends it for transcription and does not save the audio.",
+          "recordAudioAndroid": true,
+          "enableBackgroundRecording": false,
+          "enableBackgroundPlayback": false
+        }
+      ],
+      "expo-secure-store",
+      "expo-asset"
+    ],
+    "icon": "./assets/icon.png",
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

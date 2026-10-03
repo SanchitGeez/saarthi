@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: saarthi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: saarthi
+      POSTGRES_USER: saarthi
+      POSTGRES_PASSWORD: saarthi
+    ports:
+      - "54330:5432"
+    volumes:
+      - saarthi_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saarthi -d saarthi"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  saarthi_postgres:
