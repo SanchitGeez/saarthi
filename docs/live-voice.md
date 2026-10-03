@@ -161,3 +161,37 @@ a single smoke test does not establish perfect model adherence. Indian English/H
 voice character, Hinglish quality and interruption behavior need broader listening tests.
 Android plugin prebuild and native JS/Hermes export passed; an APK and physical-device
 call are not verified on this machine without an Android SDK/device.
+
+## ElevenLabs Hindi preset (2026-10-04)
+
+The local `.env` now selects `STT_PROVIDER=elevenlabs`, `TTS_PROVIDER=elevenlabs`,
+`VOICE_TTS_MODEL=eleven_multilingual_v2` and
+`ELEVEN_LABS_TTS_MODEL=eleven_multilingual_v2`. Live recognition uses
+`scribe_v2_realtime`; recorded notes use `scribe_v2`. OpenRouter Flash Lite still
+writes both voice and typed replies. Live recognition hints Hindi plus English for
+auto/Hindi/Hinglish preferences, or English plus Hindi for English preference. This
+avoids unrestricted language detection choosing an unrelated language. Delayed
+language-reporting metadata is disabled so the ordinary committed transcript can
+reach the answer model without waiting for that metadata. Reported language follows
+the primary hint. ElevenLabs server VAD commits after 0.8 seconds of silence instead
+of waiting for a manual transcript flush.
+Hindi/Hinglish voice instructions produce Hindi
+words in Devanagari, while typed Hinglish keeps its existing Roman script behavior.
+
+The new ElevenLabs key authenticated, but its free plan returned `paid_plan_required`
+for a native Hindi library voice (Yash, `XcVyMASZ3J9LrnSxDs2W`). The app therefore
+uses the existing built-in George voice (`JBFqnCBsd6RMkjVDRZzb`) with Multilingual v2.
+This can speak Hindi, but the English source voice may retain its accent. A paid key
+is needed to use the selected native Hindi library voice through the API. Switching
+providers cannot itself guarantee native pronunciation. Multilingual v2 favors voice
+quality over the lower latency and lower price of Flash v2.5.
+
+For Hindi live smoke testing, run the API/worker with the current settings and use:
+`SAARTHI_TEST_LANGUAGE=hi uv run python tests/live_voice.py`.
+
+Validation for this preset: 30 backend regressions passed. A real LiveKit Hindi smoke
+call passed generated Hindi audio, Hindi transcription, a spoken reply, history,
+exact-evidence memory and room cleanup. The free-account built-in voice can retain
+an English accent. The cheap answer model also showed inconsistent instruction
+following in earlier Hindi runs; passing the speech test is not a quality guarantee
+for Hindi advice. Model/voice listening evaluation remains necessary.

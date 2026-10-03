@@ -66,3 +66,29 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('Speak natural Hindi',turn.items[0].text_content)
         self.assertIn(str(source),turn.items[-1].text_content)
         self.assertTrue(agent.user_spoke.is_set())
+
+    def test_voice_hindi_and_hinglish_use_pronounceable_script(self):
+        from app.continuity import voice_instructions
+        for language in ['auto','hi','hinglish']:
+            self.assertIn('Devanagari',voice_instructions(language,{}))
+
+    def test_elevenlabs_call_uses_selected_voice_and_multilingual_model(self):
+        with patch.multiple(settings, stt_provider='elevenlabs', tts_provider='elevenlabs',
+            eleven_labs_api_key='test-eleven', eleven_labs_voice_id='test-voice', voice_tts_model='eleven_multilingual_v2'), patch('livekit.plugins.elevenlabs.STT') as stt, patch('livekit.plugins.elevenlabs.TTS') as tts:
+            build_stt(); build_tts()
+            self.assertEqual(stt.call_args.kwargs['model'],'scribe_v2_realtime')
+            self.assertEqual(tts.call_args.kwargs['model'],'eleven_multilingual_v2')
+            self.assertEqual(tts.call_args.kwargs['voice_id'],'test-voice')
+            self.assertEqual(tts.call_args.kwargs['api_key'],'test-eleven')
+
+    def test_elevenlabs_recognition_hints_hindi_and_english(self):
+        with patch.object(settings,'stt_provider','elevenlabs'), patch('livekit.plugins.elevenlabs.STT') as stt:
+            for preference in ['auto','hi','hinglish']:
+                build_stt(preference)
+                self.assertEqual(stt.call_args.kwargs['language_code'],'hi')
+                self.assertEqual(stt.call_args.kwargs['secondary_languages'],['en'])
+                self.assertFalse(stt.call_args.kwargs['include_language_detection'])
+                self.assertEqual(stt.call_args.kwargs['server_vad']['vad_silence_threshold_secs'],0.8)
+            build_stt('en')
+            self.assertEqual(stt.call_args.kwargs['language_code'],'en')
+            self.assertEqual(stt.call_args.kwargs['secondary_languages'],['hi'])

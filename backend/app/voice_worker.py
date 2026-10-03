@@ -171,7 +171,7 @@ async def parth_call(ctx: agents.JobContext):
         if not context:
             return
         session = AgentSession(
-            stt=build_stt(),
+            stt=build_stt(context[0]),
             llm=build_llm(),
             conn_options=SessionConnectOptions(llm_conn_options=APIConnectOptions(max_retry=0, timeout=12),
                 stt_conn_options=APIConnectOptions(max_retry=1, timeout=10),

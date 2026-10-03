@@ -26,13 +26,18 @@ def build_llm():
     return llm.FallbackAdapter(models, attempt_timeout=12, max_retry_per_llm=0)
 
 
-def build_stt():
+def build_stt(language="auto"):
     from livekit.plugins import deepgram, elevenlabs
     if settings.stt_provider == "deepgram":
         return deepgram.STT(api_key=settings.deepgram_api_key, model=settings.deepgram_model,
             language=settings.deepgram_language, mip_opt_out=True)
+    primary = "en" if language == "en" else "hi"
+    secondary = ["hi"] if primary == "en" else ["en"]
     return elevenlabs.STT(api_key=settings.eleven_labs_api_key,
-        model="scribe_v2_realtime", enable_logging=False)
+        model="scribe_v2_realtime", language_code=primary, secondary_languages=secondary,
+        include_language_detection=False,
+        server_vad={"vad_silence_threshold_secs": 0.8, "min_silence_duration_ms": 500},
+        enable_logging=False)
 
 
 def build_tts(*, streaming=True):

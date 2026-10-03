@@ -13,6 +13,7 @@ import sys
 import httpx
 from livekit import rtc
 
+LANGUAGE = os.environ.get('SAARTHI_TEST_LANGUAGE', 'en')
 API = os.environ.get('SAARTHI_TEST_API', 'http://127.0.0.1:8001/api')
 logging.basicConfig(level=logging.WARNING)
 
@@ -38,7 +39,7 @@ async def run():
             if not code: raise RuntimeError('Requires development OTP mode with SMTP disabled.')
             response = await client.post('/auth/verify-code', json={'email': email, 'code': code}); response.raise_for_status()
             auth = {'Authorization': 'Bearer '+response.json()['access_token']}
-            await client.patch('/me/preferences', headers=auth, json={'language':'en'})
+            await client.patch('/me/preferences', headers=auth, json={'language':LANGUAGE})
             response = await client.post('/conversations', headers=auth, json={}); response.raise_for_status(); cid = response.json()['id']
             response = await client.post('/voice/sessions', headers=auth, json={'conversation_id':cid, 'client_id':str(uuid4())}); response.raise_for_status()
             call = response.json(); sid = call['session_id']
@@ -72,7 +73,7 @@ async def run():
             await room.local_participant.perform_rpc(destination_identity=agent.identity, method='saarthi.ready', payload='')
             await asyncio.sleep(1)
             assert len(await history()) == before, 'Readiness replayed greeting'
-            fixture = 'I prefer short replies. Please remember that. What is one small way to make my workday calmer?'
+            fixture = ('मुझे छोटे जवाब पसंद हैं। कृपया यह बात याद रखिए। काम का तनाव कम करने के लिए मैं क्या छोटा कदम उठा सकता हूँ?' if LANGUAGE == 'hi' else 'I prefer short replies. Please remember that. What is one small way to make my workday calmer?')
             response = await client.post('/voice/speak', headers=auth, json={'text':fixture}); response.raise_for_status()
             container = av.open(io.BytesIO(response.content))
             resampler = av.AudioResampler(format='s16', layout='mono', rate=16000)
@@ -89,10 +90,10 @@ async def run():
                     if any(m['role']=='user' for m in messages) and len([m for m in messages if m['role']=='assistant']) >= 2: break
                     await asyncio.sleep(0.3)
             user_text = next(m['text'] for m in messages if m['role']=='user')
-            assert 'short' in user_text.lower(), user_text
+            assert ('छोट' in user_text if LANGUAGE == 'hi' else 'short' in user_text.lower()), user_text
             print('PASS speech → STT → LLM → spoken reply → saved history', [(m['role'],m['text']) for m in messages], flush=True)
             memories = (await client.get('/memories',headers=auth)).json()
-            assert any('short' in m['content'].lower() for m in memories), 'Explicit memory request was not saved'
+            assert any(any(word in m['content'].lower() for word in ['short','छोट','संक्षिप्त']) for m in memories), 'Explicit memory request was not saved'
             print('PASS evidence-backed voice memory:', memories[0]['content'])
             response = await client.delete('/voice/sessions/'+sid, headers=auth); response.raise_for_status()
             print('PASS call ends and room is removed')
