@@ -41,3 +41,7 @@ The main assistant response is readable prose, with a source-backed shlok insert
 ## Accessibility and motion
 
 Label every icon control. Use radio semantics for language/translation choice, busy/disabled states for actions, and live announcements for useful status changes. Native back returns from settings. Dialogs use platform modal focus containment, Escape/back dismissal, and focus restoration. Reduced-motion settings disable animated scrolling/drawer transitions. Default content is always visible; no reveal animations gate rendering.
+
+## Parth call scene
+
+The call home uses the supplied temple portrait as one cropped background. Before a call it is dark and at 20% opacity; after connection it fades into the full image. Respect reduced motion. Use the existing icon family, a broad microphone action labeled Baat karein, and a small TYPE action with a keyboard icon. During a call show captions, actual agent state, mute and End. History and memory stay in the drawer. The name is Parth, visibly identified as AI. No random activities or additional generated poses in this iteration. The existing text theme remains for Type and settings.

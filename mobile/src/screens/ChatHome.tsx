@@ -21,7 +21,7 @@ const suggestions = [
   { label: "Relationships", prompt: "Something in a relationship has been weighing on me.", icon: "book" as const },
   { label: "A restless mind", prompt: "My mind keeps going in circles, and I want to understand why.", icon: "down" as const },
 ];
-export function ChatHome({ user, onSignOut, onUserChange }: { user: User; onSignOut: () => void; onUserChange: (user: User) => void }) {
+export function ChatHome({ user, onSignOut, onUserChange, initialConversationId, initialPrivate = false, onConversationChange, onBackToCall }: { user: User; onSignOut: () => void; onUserChange: (user: User) => void; initialConversationId?: string | null; initialPrivate?: boolean; onConversationChange?: (id: string | null) => void; onBackToCall?: () => void }) {
   const { width } = useWindowDimensions();
   const wide = width >= 900;
   const insets = useSafeAreaInsets();
@@ -41,8 +41,8 @@ export function ChatHome({ user, onSignOut, onUserChange }: { user: User; onSign
   const cache = useRef(new Map<string, Message[]>());
   const drafts = useRef(new Map<string, string>());
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [privateDraft, setPrivateDraft] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(initialConversationId ?? null);
+  const [privateDraft, setPrivateDraft] = useState(initialPrivate);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -268,6 +268,10 @@ export function ChatHome({ user, onSignOut, onUserChange }: { user: User; onSign
     const timer = setTimeout(() => void toggleRecording(), Math.max(0, 60000 - recording.durationMillis));
     return () => clearTimeout(timer);
   }, [recording.isRecording]);
+  useEffect(() => {
+    if (initialConversationId) void chooseConversation(initialConversationId);
+  }, []);
+  useEffect(() => { onConversationChange?.(activeId); }, [activeId]);
   const blocked = busy || waiting || transcribing || startingRecording || !!voiceFailure || recording.isRecording || loading || !!historyError;
   const drawer = <ConversationDrawer conversations={conversations} activeId={activeId} email={user.email} onSelect={id => void chooseConversation(id)} onCreate={newConversation} onSettings={openSettings} onSignOut={onSignOut} onDelete={removeConversation} onClose={wide ? undefined : () => setDrawerOpen(false)} loading={listLoading} error={listError} onRefresh={() => { setListLoading(true); void refreshList(); }} />;
   return <View style={styles.root}>
@@ -276,7 +280,8 @@ export function ChatHome({ user, onSignOut, onUserChange }: { user: User; onSign
       {settingsOpen ? <MemorySettings user={user} onBack={() => setSettingsOpen(false)} onSignOut={onSignOut} onUserChange={onUserChange} /> : <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === "ios" ? "padding" : Platform.OS === "android" ? "height" : undefined} keyboardVerticalOffset={insets.top}>
         <View style={styles.header}>
           {!wide ? <Pressable accessibilityRole="button" accessibilityLabel="Open conversations and account" onPress={() => { Keyboard.dismiss(); setDrawerOpen(true); }} style={styles.headerIcon}><Icon name="menu" color={colors.body} /></Pressable> : null}
-          <View style={styles.headerCopy}><Text style={styles.headerTitle}>Saarthi</Text><View style={styles.headerSubtitle}><View style={styles.statusDot} /><Text style={styles.headerSub}>{isPrivate ? "Memory off for this chat" : !user.memory_enabled ? "Memory is turned off" : "Rooted in the Bhagavad Gita"}</Text></View></View>
+          {onBackToCall ? <Pressable accessibilityRole="button" accessibilityLabel="Back to Parth" onPress={() => { if (canNavigate()) onBackToCall(); }} style={styles.headerIcon}><Icon name="back" /></Pressable> : null}
+          <View style={styles.headerCopy}><Text style={styles.headerTitle}>Parth</Text><View style={styles.headerSubtitle}><View style={styles.statusDot} /><Text style={styles.headerSub}>{isPrivate ? "Memory off for this chat" : !user.memory_enabled ? "Memory is turned off" : "Rooted in the Bhagavad Gita"}</Text></View></View>
           <Pressable accessibilityRole="button" accessibilityLabel="Start new conversation" onPress={() => newConversation()} style={styles.headerIcon}><Icon name="plus" color={colors.primary} /></Pressable>
         </View>
         {notice ? <View style={styles.notice}><Text accessibilityRole="alert" style={styles.noticeText}>{notice}</Text><Pressable accessibilityRole="button" accessibilityLabel="Dismiss notification" onPress={() => setNotice("")} style={styles.headerIcon}><Icon name="close" size={18} /></Pressable></View> : null}

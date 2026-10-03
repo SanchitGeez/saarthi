@@ -104,3 +104,12 @@ export async function signOut() {
   if (Platform.OS === "web") window.sessionStorage.removeItem(SESSION_KEY);
   else await SecureStore.deleteItemAsync(SESSION_KEY);
 }
+
+export const getCallStatus = () => call<{ available: boolean; max_seconds: number }>('/voice/sessions/status');
+export const startCall = (conversationId: string, clientId: string) => call<import('./call/types').CallCredentials>('/voice/sessions', {
+  method: 'POST', body: JSON.stringify({ conversation_id: conversationId, client_id: clientId }),
+});
+export const endCall = async (sessionId: string) => {
+  try { await call<void>(`/voice/sessions/${sessionId}`, { method: 'DELETE' }); }
+  catch (error) { if (!(error instanceof ApiError && error.status === 404)) throw error; }
+};

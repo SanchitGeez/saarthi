@@ -98,3 +98,32 @@ class ChatTurn(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class VoiceSession(Base):
+    __tablename__ = "voice_sessions"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    conversation_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), index=True)
+    room_name: Mapped[str] = mapped_column(String(100), unique=True)
+    status: Mapped[str] = mapped_column(String(16), default="connecting")
+    worker_claimed: Mapped[bool] = mapped_column(Boolean, default=False)
+    greeting_claimed: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class VoiceMessage(Base):
+    __tablename__ = "voice_messages"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
+    session_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("voice_sessions.id", ondelete="CASCADE"), index=True)
+    conversation_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), index=True)
+    event_id: Mapped[str] = mapped_column(String(100))
+    role: Mapped[str] = mapped_column(String(16))
+    text: Mapped[str] = mapped_column(Text)
+    interrupted: Mapped[bool] = mapped_column(Boolean, default=False)
+    memory_saved: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)

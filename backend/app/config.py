@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Literal
 
 from dotenv import dotenv_values, load_dotenv
 from pydantic import AliasChoices, Field
@@ -55,6 +56,26 @@ class Settings(BaseSettings):
     eleven_labs_voice_id: str = "JBFqnCBsd6RMkjVDRZzb"
     eleven_labs_tts_model: str = "eleven_multilingual_v2"
     eleven_labs_stt_model: str = "scribe_v2"
+    livekit_url: str = ""
+    livekit_api_key: str = ""
+    livekit_api_secret: str = ""
+    livekit_agent_name: str = "saarthi-parth"
+    voice_max_seconds: int = Field(default=900, ge=60, le=3600)
+    voice_idle_seconds: int = Field(default=120, ge=30, le=600)
+    voice_tts_model: str = "eleven_flash_v2_5"
+    llm_provider: Literal["gemini", "openrouter"] = "gemini"
+    openrouter_api_key: str = ""
+    openrouter_model: str = "google/gemini-2.5-flash-lite"
+    stt_provider: Literal["elevenlabs", "deepgram"] = "elevenlabs"
+    deepgram_api_key: str = ""
+    deepgram_model: str = "nova-3"
+    deepgram_language: str = "multi"
+    tts_provider: Literal["elevenlabs", "murf"] = "elevenlabs"
+    murf_api_key: str = Field(default="", validation_alias=AliasChoices("MURF_API_KEY", "MURF_AI"))
+    murf_model: str = "FALCON"
+    murf_voice: str = "en-IN-abhinav"
+    murf_locale: str = ""
+    murf_style: str = "Conversational"
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""

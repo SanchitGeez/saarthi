@@ -94,7 +94,7 @@ export function ChatMessage({ message, voiceAvailable, language, retryDisabled =
   }).replace(/\*\*/g, "");
   return <View style={[styles.row, mine && styles.rowMine]}>
     <View style={[styles.body, mine && styles.bodyMine]}>
-      {!mine ? <View style={styles.identity}><SaarthiMark size={26} /><Text style={styles.name}>Saarthi</Text></View> : null}
+      {!mine ? <View style={styles.identity}><SaarthiMark size={26} /><Text style={styles.name}>Parth</Text></View> : null}
       {mine ? <View style={[styles.userBubble, message.status === "failed" && styles.failedBubble]}><Text selectable style={styles.userText}>{message.text}</Text></View> : <View style={styles.prose}>
         {parts.map((part, index) => {
           const reference = /^\[\[gita:([\d.]+)\]\]$/.exec(part)?.[1];

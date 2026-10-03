@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent import embed
 from app.turns import router as turns_router
+from app.voice_sessions import router as voice_router, close_user_calls
 from app.auth import (
     create_access_token,
     current_user,
@@ -64,6 +65,7 @@ app.add_middleware(
 
 
 app.include_router(turns_router)
+app.include_router(voice_router)
 
 @app.get("/api/health")
 async def health(db: AsyncSession = Depends(get_db)):
@@ -181,6 +183,11 @@ async def delete_account(
     user: User = Depends(current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await db.scalar(select(User).where(User.id == user.id).with_for_update())
+    try:
+        await close_user_calls(db, user.id)
+    except Exception as exc:
+        raise HTTPException(503, "Could not close an active call. Please retry deletion.") from exc
     conversations = await db.scalars(select(Conversation).where(Conversation.user_id == user.id))
     for conversation in conversations:
         try:
@@ -265,8 +272,10 @@ async def delete_conversation(
     user: User = Depends(current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await db.scalar(select(User).where(User.id == user.id).with_for_update())
     conversation = await owned_conversation(conversation_id, user, db)
     try:
+        await close_user_calls(db, user.id, conversation.id)
         await request.app.state.session_service.delete_session(
             app_name=settings.app_name,
             user_id=str(user.id),
@@ -349,7 +358,8 @@ async def delete_memory(
 
 @app.get("/api/voice/status")
 async def voice_status(user: User = Depends(current_user)):
-    return {"available": bool(settings.eleven_labs_api_key)}
+    from app.providers import missing_credentials
+    return {"available": not missing_credentials()}
 
 
 @app.post("/api/voice/transcribe")

@@ -10,12 +10,16 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.saarthi.companion",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Record a voice note to share with Saarthi. The app sends it for transcription and does not save the audio."
+        "NSMicrophoneUsageDescription": "Talk with Parth in a live conversation. Audio is processed for speech and is not recorded by Saarthi."
       }
     },
     "android": {
       "package": "com.saarthi.companion",
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "plugins": [
       [
@@ -28,7 +32,9 @@
         }
       ],
       "expo-secure-store",
-      "expo-asset"
+      "expo-asset",
+      "@livekit/react-native-expo-plugin",
+      "@config-plugins/react-native-webrtc"
     ],
     "icon": "./assets/icon.png",
     "web": {

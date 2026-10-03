@@ -6,14 +6,15 @@ import re
 from uuid import UUID, uuid4, uuid5, NAMESPACE_URL
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent import TurnContext, commit_memories, reset_turn_context, run_turn, set_turn_context
 from app.auth import current_user
 from app.config import settings
 from app.db import get_db
-from app.models import ChatTurn, Conversation, User
+from app.models import ChatTurn, Conversation, User, VoiceSession
+from app.conversation_history import merge_voice_history
 from app.schemas import TurnRequest
 from app.scripture import verse_payload
 
@@ -105,7 +106,7 @@ async def get_messages(conversation_id: UUID, request: Request,
     conversation = await owned(conversation_id, user, db, lock=True)
     rows = await load_turns(conversation, user, db, request)
     await db.commit()
-    return messages_payload(rows)
+    return await merge_voice_history(db, conversation_id, messages_payload(rows))
 
 
 @router.post("/{conversation_id}/turns")
@@ -114,7 +115,14 @@ async def send_turn(conversation_id: UUID, payload: TurnRequest, request: Reques
     user_text = payload.text.strip()
     if not user_text:
         raise HTTPException(422, "Write a little about what's on your mind.")
+    await db.scalar(select(User).where(User.id == user.id).with_for_update())
     conversation = await owned(conversation_id, user, db, lock=True)
+    if await db.scalar(select(VoiceSession.id).where(
+        VoiceSession.conversation_id == conversation_id, VoiceSession.status.in_(("connecting", "active")),
+        VoiceSession.expires_at > datetime.now(UTC),
+        or_(VoiceSession.status == "active", VoiceSession.created_at > datetime.now(UTC) - timedelta(seconds=60)),
+    ).limit(1)):
+        raise HTTPException(409, "End your call before sending a typed message.")
     rows = await load_turns(conversation, user, db, request)
     turn_id = payload.client_id or uuid4()
     existing = await db.get(ChatTurn, turn_id)
@@ -145,23 +153,25 @@ async def send_turn(conversation_id: UUID, payload: TurnRequest, request: Reques
     token = set_turn_context(context)
     failure_code, failure = None, None
     try:
-        if not settings.google_api_key:
+        from app.providers import missing_credentials
+        if missing_credentials(voice=False):
             raise RuntimeError("Chat is not configured.")
         successful = [row for row in rows if row.status == "completed"]
+        history = await merge_voice_history(db, conversation.id, messages_payload(successful))
         async with asyncio.timeout(90):
             try:
-                answer = await run_turn(user.id, conversation.id, user_text, successful, user.language)
+                answer = await run_turn(user.id, conversation.id, user_text, successful, user.language, messages=history)
             except Exception as provider_error:
                 code = getattr(provider_error, "code", getattr(provider_error, "status_code", None))
                 fallback = settings.gemini_fallback_model
-                if code not in {429, 503} or not fallback or fallback == settings.gemini_model:
+                if settings.llm_provider != "gemini" or code not in {429, 503} or not fallback or fallback == settings.gemini_model:
                     raise
                 # One bounded fallback for model overload or rate limits; no retry loop.
                 # Discard tool changes from the abandoned invocation.
                 context.memory_changes.clear()
                 context.scripture_refs.clear()
                 logger.info("Primary Gemini model unavailable; trying configured fallback once")
-                answer = await run_turn(user.id, conversation.id, user_text, successful, user.language, fallback)
+                answer = await run_turn(user.id, conversation.id, user_text, successful, user.language, fallback, messages=history)
         if not answer:
             raise RuntimeError("Empty assistant response.")
         # Only tool-verified markers may survive into a saved reply.

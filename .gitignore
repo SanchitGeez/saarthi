@@ -20,3 +20,6 @@ mobile/ios/
 .codex/
 .aws/
 .plan-url
+
+# Local ADK/CLI session scratch files
+*.ses

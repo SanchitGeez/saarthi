@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StatusBar, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ApiError, getMe, onUnauthorized, readSession, saveSession, setAccessToken, signOut } from "./src/api";
-import { ChatHome } from "./src/screens/ChatHome";
+import { CallHome } from "./src/screens/CallHome";
 import { SignInScreen } from "./src/screens/SignInScreen";
 import { SaarthiMark } from "./src/components/Icons";
 import { colors, fonts } from "./src/theme";
@@ -41,14 +41,14 @@ export default function App() {
     try { await signOut(); }
     finally { if (live.current) { setUser(null); setError(""); } }
   }
-  return <SafeAreaProvider><SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-    <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+  return <SafeAreaProvider><SafeAreaView style={{ flex: 1, backgroundColor: user ? "#100c09" : colors.background }}>
+    <StatusBar barStyle={user ? "light-content" : "dark-content"} backgroundColor={user ? "#100c09" : colors.background} />
     {starting || error ? <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 28, gap: 20 }}>
       <SaarthiMark size={64} /><Text style={{ color: colors.primary, fontFamily: fonts.heading, fontSize: 30 }}>Saarthi</Text>
       {starting ? <ActivityIndicator color={colors.primary} accessibilityLabel="Opening Saarthi" /> : <>
         <Text accessibilityRole="alert" style={{ color: colors.body, fontSize: 16, textAlign: "center", lineHeight: 25 }}>{error}</Text>
         <Pressable accessibilityRole="button" onPress={() => void start()} style={{ minHeight: 48, justifyContent: "center", backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 24 }}><Text style={{ color: colors.white, fontWeight: "600" }}>Try again</Text></Pressable>
       </>}
-    </View> : user ? <ChatHome key={user.id} user={user} onSignOut={() => void leave()} onUserChange={setUser} /> : <SignInScreen onSignIn={signedIn} />}
+    </View> : user ? <CallHome key={user.id} user={user} onSignOut={() => void leave()} onUserChange={setUser} /> : <SignInScreen onSignIn={signedIn} />}
   </SafeAreaView></SafeAreaProvider>;
 }

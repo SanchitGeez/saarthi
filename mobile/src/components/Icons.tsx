@@ -2,7 +2,7 @@ import Svg, { Circle, Ellipse, Path, Rect } from "react-native-svg";
 import type { ReactNode } from "react";
 import { colors } from "../theme";
 
-type Name = "menu" | "plus" | "send" | "mic" | "volume" | "close" | "settings" | "lock" | "more" | "leaf" | "back" | "check" | "trash" | "logout" | "retry" | "edit" | "book" | "search" | "down" | "stop";
+type Name = "menu" | "plus" | "send" | "mic" | "volume" | "close" | "settings" | "lock" | "more" | "leaf" | "back" | "check" | "trash" | "logout" | "retry" | "edit" | "book" | "search" | "down" | "stop" | "keyboard" | "phone" | "mic-off";
 
 export function Icon({ name, size = 22, color = colors.ink }: { name: Name; size?: number; color?: string }) {
   const common = { stroke: color, strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, fill: "none" };
@@ -26,6 +26,9 @@ export function Icon({ name, size = 22, color = colors.ink }: { name: Name; size
     book: <><Path {...common} d="M12 5c-3-2-6-2-9-1v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-3-1-6-1-9 1Zm0 0v15" /></>,
     search: <><Circle {...common} cx="10" cy="10" r="6" /><Path {...common} d="m15 15 5 5" /></>,
     down: <Path {...common} d="m6 9 6 6 6-6" />,
+    keyboard: <><Rect {...common} x="2" y="5" width="20" height="14" rx="2" /><Path {...common} d="M6 9h1m3 0h1m3 0h1m3 0h1M6 13h1m3 0h1m3 0h1m3 0h1M7 16h10" /></>,
+    phone: <Path {...common} d="M4 15c4-5 12-5 16 0l-1 4-5-2v-3h-4v3l-5 2-1-4Z" />,
+    "mic-off": <><Path {...common} d="m3 3 18 18M9 5a3 3 0 0 1 6 1v6M5 11v1a7 7 0 0 0 12 5M12 19v3m-4 0h8" /></>,
     stop: <Rect x="6" y="6" width="12" height="12" rx="2" fill={color} />,
   };
   return <Svg width={size} height={size} viewBox="0 0 24 24" accessible={false}>{paths[name]}</Svg>;

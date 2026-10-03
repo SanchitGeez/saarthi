@@ -22,22 +22,30 @@ async def transcribe(upload: UploadFile) -> str:
         raise HTTPException(status_code=413, detail="That recording is too large. Try a shorter note.")
     if not audio:
         raise HTTPException(status_code=400, detail="The recording was empty. Please try again.")
-    headers = _headers()
     filename = upload.filename or "voice-note.m4a"
     mime_type = upload.content_type or "audio/mp4"
     try:
         async with httpx.AsyncClient(timeout=75) as client:
-            response = await client.post(
-                f"{ELEVEN_BASE}/speech-to-text",
-                headers=headers,
-                data={"model_id": settings.eleven_labs_stt_model, "tag_audio_events": "false"},
-                files={"file": (filename, audio, mime_type)},
-            )
+            if settings.stt_provider == "deepgram":
+                if not settings.deepgram_api_key:
+                    raise HTTPException(503, "Speech recognition is not configured yet.")
+                response = await client.post("https://api.deepgram.com/v1/listen",
+                    headers={"Authorization": "Token " + settings.deepgram_api_key, "Content-Type": mime_type},
+                    params={"model": settings.deepgram_model, "language": settings.deepgram_language,
+                        "smart_format": "true", "mip_opt_out": "true"}, content=audio)
+            else:
+                response = await client.post(f"{ELEVEN_BASE}/speech-to-text", headers=_headers(),
+                    data={"model_id": settings.eleven_labs_stt_model, "tag_audio_events": "false"},
+                    files={"file": (filename, audio, mime_type)})
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Voice transcription is unavailable right now.") from exc
     if response.is_error:
         raise HTTPException(status_code=502, detail="Voice transcription could not process that note.")
-    text = response.json().get("text", "").strip()
+    if settings.stt_provider == "deepgram":
+        try: text = response.json()["results"]["channels"][0]["alternatives"][0]["transcript"].strip()
+        except (KeyError, IndexError, TypeError): text = ""
+    else:
+        text = response.json().get("text", "").strip()
     if not text:
         raise HTTPException(status_code=422, detail="I couldn't make out the recording. Try once more or type it.")
     return text
@@ -49,15 +57,21 @@ async def speak(text: str) -> bytes:
         raise HTTPException(status_code=422, detail="There is no reply text to read aloud.")
     if len(text) > MAX_SPEECH_CHARACTERS:
         raise HTTPException(status_code=422, detail="This reply is too long to play as one recording.")
-    headers = _headers()
     try:
         async with httpx.AsyncClient(timeout=75) as client:
-            response = await client.post(
-                f"{ELEVEN_BASE}/text-to-speech/{settings.eleven_labs_voice_id}",
-                headers={**headers, "Accept": "audio/mpeg", "Content-Type": "application/json"},
-                params={"output_format": "mp3_44100_128"},
-                json={"text": text, "model_id": settings.eleven_labs_tts_model},
-            )
+            if settings.tts_provider == "murf":
+                if not settings.murf_api_key:
+                    raise HTTPException(503, "Spoken replies are not configured yet.")
+                response = await client.post("https://global.api.murf.ai/v1/speech/stream",
+                    headers={"api-key": settings.murf_api_key}, json={"text": text,
+                        "model": settings.murf_model, "voice_id": settings.murf_voice,
+                        "style": settings.murf_style, "multiNativeLocale": settings.murf_locale or None,
+                        "format": "MP3", "sample_rate": 24000})
+            else:
+                response = await client.post(f"{ELEVEN_BASE}/text-to-speech/{settings.eleven_labs_voice_id}",
+                    headers={**_headers(), "Accept": "audio/mpeg", "Content-Type": "application/json"},
+                    params={"output_format": "mp3_44100_128"},
+                    json={"text": text, "model_id": settings.eleven_labs_tts_model})
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Spoken replies are unavailable right now.") from exc
     if response.is_error:

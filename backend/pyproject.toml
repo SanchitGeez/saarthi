@@ -17,6 +17,8 @@ dependencies = [
   "openai>=2.8,<3",
   "httpx>=0.28,<1",
   "email-validator>=2.2,<3",
+  "livekit-agents[elevenlabs,google,murf,deepgram,openai,silero,turn-detector]==1.8.4",
+  "livekit-api==1.2.1",
 ]
 
 [tool.uv]

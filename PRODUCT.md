@@ -10,7 +10,7 @@ Hindu adults around 25–40 who want a private, thoughtful place to talk through
 
 ## Product Purpose
 
-Saarthi is a private conversation companion that listens, automatically remembers selective, lasting details the user explicitly shares, and offers candid, Gita-inspired perspectives that help the user find a practical next step. V1 supports English, Hindi, and natural Hinglish through text, voice notes, and spoken replies. It is not a therapist or a divine authority. A small verified Bhagavad Gita collection supplies original Sanskrit and our Hindi/English renderings; broader scripture coverage is future work. Quotations must come from that collection.
+Saarthi is a private conversation companion that listens, automatically remembers selective, lasting details the user explicitly shares, and offers candid, Gita-inspired perspectives that help the user find a practical next step. Parth is Saarthi’s named AI companion. The home screen is a quiet temple scene with one clear voice action and a smaller Type action. LiveKit supports live calls with interruptions, captions and a greeting chosen from recent permitted context; English, Hindi and Hinglish are supported by the configured speech providers. Text, voice notes and spoken replies remain available. Continuing a concern over successive visits is the core product promise. It is not a therapist or a divine authority. A small verified Bhagavad Gita collection supplies original Sanskrit and our Hindi/English renderings; broader scripture coverage is future work. Quotations must come from that collection.
 
 ## Brand Personality
 
@@ -19,7 +19,7 @@ Calm, clear, and familiar. Saarthi is an original AI companion, not a deity or a
 ## Anti-references
 
 - No clinical claims, miracle promises, fear-based religious pressure, or claims that advice is divinely delivered.
-- No generic chatbot dashboard, crowded spiritual marketplace, faux-guru portrait, or ornate decoration that competes with the conversation.
+- No generic chatbot dashboard, crowded spiritual marketplace, human-guru claims, or ornate decoration that competes with the conversation. The supplied calm temple portrait is the current scene; it is clearly labeled AI and does not establish real priestly credentials.
 - No manipulative streaks, guilt prompts, or engagement loops that reward longer conversations.
 
 ## Design Principles

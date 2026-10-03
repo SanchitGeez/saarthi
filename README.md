@@ -1,8 +1,8 @@
 # Saarthi
 
-A private chat companion inspired by the Bhagavad Gita. The first build targets Android and iOS with Expo React Native and a small FastAPI service.
+A private conversation companion inspired by the Bhagavad Gita. Talk with Parth in a temple setting, or use Type. The first build targets Android and iOS with Expo React Native and a small FastAPI service.
 
-Saarthi is an original AI companion, not a deity or therapist. V1 supports English, Hindi, and Hinglish text, voice notes that become editable text, optional spoken replies, separate conversations, and selective, automatic cross-chat memory. The app does not retain audio.
+Saarthi is an original AI companion, not a deity or therapist. Supports live calls with LiveKit, English/Hindi/Hinglish text, voice notes, spoken replies, separate conversations, and selective cross-chat memory. Saarthi saves finalized call transcripts but does not record call audio. Speech and AI providers may retain data under their own policies.
 
 ## Start locally
 
@@ -10,7 +10,8 @@ Saarthi is an original AI companion, not a deity or therapist. V1 supports Engli
 2. Start this project's PostgreSQL database with `docker compose up -d postgres`.
 3. Install the API dependencies from `backend` with `uv sync`, then run `uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000` from that directory. The API is at `http://localhost:8000`; its interactive docs are at `http://localhost:8000/docs`.
 4. If `mobile/.env` is missing, copy `mobile/.env.example` to it. For a physical phone, set `EXPO_PUBLIC_API_URL=http://<your-laptop-Wi-Fi-IP>:8000/api`; `10.0.2.2` works only in the Android emulator. Install mobile dependencies with `npm install` in `mobile`.
-5. Keep the phone and laptop on the same Wi-Fi, then run `npx expo start --go --lan --clear` from `mobile` and scan that terminal's current QR code in Expo Go. This project uses SDK 57: install a compatible [Android Expo Go build](https://expo.dev/go?sdkVersion=57&platform=android&device=true). For iOS-specific SDK/sign-in requirements, see [Expo's compatibility guidance](https://docs.expo.dev/troubleshooting/expo-go-version-mismatch/).
+5. For live calls, add `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` to the root `.env`. The configured ElevenLabs account needs funded realtime STT and TTS access. From `backend`, run `uv run python -m app.voice_worker download-files` once, then run `uv run python -m app.voice_worker dev` alongside the API. The worker name must match `LIVEKIT_AGENT_NAME`.
+6. From `mobile`, run `npm run android` to build/install the native Android app, or `npm run ios` on macOS. LiveKit needs native WebRTC modules, so use a development build rather than Expo Go. Keep the device and laptop on the same Wi-Fi. A production build connects to your deployed API and a running worker. Expo Go can still use Type; trying a live call shows a build requirement.
 
 When the API runs in development without SMTP settings, the sign-in screen receives the one-time code directly so local setup works. Production requires SMTP values and a strong `JWT_SECRET`; it never returns the sign-in code to the app.
 
@@ -18,15 +19,15 @@ If scanning stays on a spinner, open `http://<your-laptop-Wi-Fi-IP>:8081/status`
 
 ## Services and data
 
-The mobile app sends authenticated requests to FastAPI. FastAPI verifies the account, owns conversation and memory rules, and calls a single Google ADK Runner configured with the Gemini model in `GEMINI_MODEL` (default `gemini-3.8-flash`). The `chat_turns` table is the delivery record: one user message, reply, and processing/completed/failed state per stable ID. Each ADK invocation reconstructs context from successful exchanges; failed events cannot pollute the next prompt. Existing ADK history is imported lazily when opened. A single configurable fallback Gemini model is tried on upstream 429/503, within the same deadline.
+The mobile app sends authenticated requests to FastAPI. FastAPI verifies the account, owns conversation and memory rules, and calls a single Google ADK Runner configured with the Gemini model in `GEMINI_MODEL` (default `gemini-3.8-flash`). The `chat_turns` table is the delivery record: one user message, reply, and processing/completed/failed state per stable ID. Each ADK invocation reconstructs context from successful typed exchanges and finalized voice messages; failed events cannot pollute the next prompt. Existing ADK history is imported lazily when opened. A single configurable fallback Gemini model is tried on upstream 429/503, within the same deadline.
 
-The app owns five PostgreSQL tables: `users`, `conversations`, `chat_turns`, `memories`, and short-lived `auth_codes`. PostgreSQL with pgvector stores an embedding next to each memory when the optional OpenAI-compatible embedding endpoint is configured. Memory retrieval uses bounded, owner-scoped text ranking and includes useful preferences/context even when exact query words do not match. Embeddings remain optional for edited memories. There is no separate vector database, background job queue, object store, or audio table.
+The text app owns these PostgreSQL tables: `users`, `conversations`, `chat_turns`, `memories`, and short-lived `auth_codes`. PostgreSQL with pgvector stores an embedding next to each memory when the optional OpenAI-compatible embedding endpoint is configured. Memory retrieval uses bounded, owner-scoped text ranking and includes useful preferences/context even when exact query words do not match. Embeddings remain optional for edited memories. Live calls add `voice_sessions` and `voice_messages`. Both are additive tables created at startup for existing local databases. There is no audio recording table, object store, or job queue. A LiveKit worker runs only while a call is active; PostgreSQL supplies continuity between calls.
 
 Email codes use SMTP in production and a development-only code response locally. ElevenLabs handles speech-to-text and on-demand text-to-speech. Recordings are uploaded for transcription and discarded on success. A failed note stays temporarily on the device for Retry/Discard and is cleared when the chat screen unmounts; it is not restored on app launch. Spoken replies are returned as a response and held in the phone's cache only for playback. Murf credentials may exist in the neighboring environment, but Murf is not called by this version.
 
 ## Explore the updated app
 
-Launch opens a fresh draft. Send a message to create history; use the drawer to search older conversations, start a chat without memory, open Memory & settings, or sign out. Failed messages show Retry and Remove. Memory saves are automatic for selected lasting facts, with edit/delete controls in settings. Relevant shlok cards offer Sanskrit, English/Hindi switches, and source links.
+Launch opens a dim temple. Baat karein connects a live call, lights the scene, plays a quiet bell, and lets the LLM choose an opening from allowed context. Type opens typed chat. A reconnect does not replay the opening. Use mute and End during a call; calls end when the app goes to the background, after the configured idle timeout, or at the absolute time limit. Voice and text share history; use the drawer to search older conversations, start a chat without memory, open Memory & settings, or sign out. Failed messages show Retry and Remove. Memory saves are automatic for selected lasting facts, with edit/delete controls in settings. Relevant shlok cards offer Sanskrit, English/Hindi switches, and source links.
 
 For web preview, run `npm run web` from `mobile` with `EXPO_PUBLIC_API_URL=http://localhost:8000/api`. For device testing, retain the LAN address in `mobile/.env` and start Uvicorn with `--host 0.0.0.0`. Restart Metro after changing the app configuration or dependencies.
 
@@ -40,6 +41,7 @@ The phone inspector shows phone-to-FastAPI traffic. Gemini/ElevenLabs calls happ
 
 ## Product and architecture notes
 
+- [Live voice setup, architecture and testing](docs/live-voice.md)
 - [Product brief](PRODUCT.md)
 - [Design system](DESIGN.md)
 - [Lean architecture and implemented boundaries](docs/architecture-lean-candidate.md)
