@@ -1,3 +1,5 @@
+> Historical design/research record. Read [the current handoff](agent-handoff.md) and [product brief](../PRODUCT.md) for implemented scope and naming. These proposals/comparisons do not establish customer demand.
+
 # Historical architecture proposal — superseded
 
 > This earlier proposal contains a larger 17-table Node/Supabase design. It is retained as discussion history only. The implemented lean architecture is in [architecture-lean-candidate.md](architecture-lean-candidate.md).

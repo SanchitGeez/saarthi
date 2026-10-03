@@ -1,0 +1,170 @@
+---
+title: "Saarthi: a conversation that continues"
+brief: "A simple temple conversation, natural voice, and useful continuity across visits."
+kind: "plan"
+localOnly: true
+---
+
+> Historical proposal: see [archive status](./README.md) for superseded choices and current implementation links.
+
+
+# Saarthi: a conversation that continues
+
+Saarthi opens into a calm temple setting with a familiar young companion. The person taps **Baat karein**, speaks naturally, and can interrupt. On a later visit, Saarthi gently offers to continue a relevant concern. The product promise is **a private place to think clearly and work through something over time**. The scene makes starting feel inviting; thoughtful conversation and follow-through give people a reason to return.
+
+This is a proposed product and implementation plan, researched on October 3, 2026. The canvas and clickable prototype show the proposed controls and states. The supplied image is a mood reference displayed through a crop; it is not a finished character asset. Prototype transitions simulate a call and do not connect to a microphone or model.
+
+## Product judgment
+
+The strongest initial customer hypothesis is a Hindu adult who finds their tradition meaningful and wants to talk privately about work, relationships, family expectations, or a recurring difficulty. Start recruiting with one concrete situation, such as a difficult family conversation, while allowing people to bring other concerns. Age and religious identity alone do not establish demand. Test actual return and payment before expanding the feature set.
+
+The scene should feel like sitting beside someone who gives you space. A normal, educated, rooted young adult suits the founder's direction. Keep **Saarthi** as the name and a small **AI companion** label. The image's title “Pandit Ji” implies a credential and authority that the product has not established. The Krishna-inspired calm can live in the atmosphere and visual character without making divine identity part of the product.
+
+The first visit should produce a useful observation or question quickly. Begin broadly enough to let the person choose: “Namaste. Aaj kis baat par baat karein?” A voice response should usually be one or two short thoughts, then room to speak. The existing text prompt's 100–200 words is unsuitable as the default spoken turn. Detailed answers remain available when requested.
+
+## Simple interaction
+
+Opening the app shows the scene, menu, AI identity, **Baat karein**, and a smaller **Type instead** option. Opening the app alone does not start microphone capture or a paid room. Tapping the start button requests permission if needed and connects. Once the agent and audio are ready, the companion can greet first exactly once. After connection, conversation is hands-free: no tapping for every turn.
+
+During a call, show the companion, one truthful status, readable captions, **Mute**, **End**, and **Type**. Keep topic categories, About, Share, Save, and view selection out of the main scene. Captions can be hidden from the drawer; do not make them hard to access. The existing drawer remains the place for history, memory controls, language, privacy, and account settings. Drawer history entries open the existing transcript view; optional text input in a live call joins that call's context rather than launching a second assistant at the same time.
+
+End returns to the quiet scene. A brief optional recap can surface one chosen next step, with edit or dismiss, but the ordinary user never has to manage a task board. Do not treat every conversation as coaching: sometimes listening is the useful outcome.
+
+Start the first pilot with foreground calls. If the app backgrounds or receives a phone call, stop capture and pause/end cleanly; explain this behavior. Background calling and lock-screen controls are a later native integration, requiring deliberate audio-session work. Do not advertise them before testing.
+
+## Character states
+
+Use bundled still assets for the first release, retaining face, clothing, camera, temple, and lighting across poses. Prepare **idle**, **listening**, **thinking**, and **speaking** assets; use the calm idle asset with a visible notice for connection problems. A questioning expression can be a speaking variant. An attentive still can be more convincing than a mouth animation that fails to match the voice. A still-image scene does not require a video stream or avatar service.
+
+The state reducer combines connection status, mute status, user speech, agent processing, and actual playback. Connection failure overrides all animation. User speech switches to listening and interrupts playback; agent generation switches to thinking; actual audio playout selects speaking; otherwise use attentive idle. Debounce visual switches and honor reduced motion. Asking is dialogue intent, not a separate transport state. Asset selection should never depend only on what the LLM says it is doing.
+
+Random activities are a later experiment confined to the unconnected scene. During a personal disclosure, looking away or performing unrelated actions could feel dismissive. Avoid random chatter to fill silence. If silence persists, one gentle invitation is enough, followed by patience and an explicit idle timeout.
+
+## Continuity without burden
+
+Persistent relationship context belongs in PostgreSQL. A live worker runs for a connected session, then stops. Future check-ins are durable scheduled jobs. No user needs an always-running model or room between visits.
+
+Keep four concepts distinct: **conversation** (what was said), **memory** (selected lasting facts), **ongoing concern** (what the person is working through), and **follow-up** (a check-in they accepted). The current memory policy deliberately excludes temporary emotions and everyday actions. Record an agreed next step in an ongoing concern rather than weakening that policy and saving every detail as permanent memory.
+
+Greeting policy is selected by application code; the model phrases it naturally. Use previous session end time, recent concern freshness, user-stated action, topic sensitivity, private-mode setting, and whether the greeting has already played for this session. These timings are initial hypotheses:
+
+<Table id="greeting-policy" columns={["Situation", "Behavior", "Example"]} rows={[
+  ["First visit / memory off", "Open greeting; no personal recall", "Namaste. Aaj kis baat par baat karein?"],
+  ["Reconnect to same call", "Continue; never repeat welcome", "Resume the interrupted conversation."],
+  ["Return same day", "Offer continuity briefly", "Usi baat ko aage badhayein, ya kuch aur?"],
+  ["A few days; relevant concern", "Ask permission to revisit", "Pichli baar ki baat par lautna chahoge, ya aaj kuch aur?"],
+  ["Long gap / stale concern", "Warm broad greeting; no assumed outcome", "Kaafi din baad baat ho rahi hai. Aaj kal kaisa chal raha hai?"]
+]} />
+
+Elapsed time guides tone; it does not reveal what happened. Never assume the user followed advice or that a relationship is unchanged. Avoid speaking sensitive remembered details aloud before the person invites that topic. Private sessions read no shared memory, create no shared concern, and schedule no follow-up; retained transcript behavior stays explicit and distinct from memory-off.
+
+For a relevant concern, quietly track the person's own description, chosen next step, reported outcome, and current status. Offer “Would you like me to ask about this next time?” or a specific time when useful. At the next visit, offer continuation and allow a fresh subject. Notification check-ins are optional and neutral on the lock screen; do not include personal problem details. No guilt about absence and no fabricated off-screen activities such as “I have been thinking about you.”
+
+## Recommended stack
+
+Use **LiveKit Agents Python and LiveKit Cloud media for the first pilot**, subject to a successful Android native compatibility spike. Keep FastAPI for authentication and durable application data, PostgreSQL/pgvector for owned memory, and the existing Expo client. The frameworks supply call mechanics; the product supplies continuity and discretion.
+
+<Table id="framework-choice" columns={["Option", "Useful here", "Trade-off / decision"]} rows={[
+  ["LiveKit Agents + LiveKit rooms", "Official Expo/RN client; Python voice runtime; session, interruption and state events; managed or self-hosted transport", "Recommended pilot: integrated call and deployment path. Managed infrastructure adds a bill; verify exact native compatibility."],
+  ["Pipecat + Daily or SmallWebRTC", "Python provider pipeline; official RN clients; transport choice; Smart Turn open model", "Strong alternative when pipeline/transport control is the priority. SmallWebRTC production needs explicit deployment and connectivity work."],
+  ["Existing voice-note endpoints", "Already working fallback, editable transcription, chosen voice", "Keep as fallback. Complete upload and complete reply cannot give natural live interruptions."],
+  ["Gemini Live within LiveKit", "Audio-native conversation candidate", "Benchmark separately. Native voice changes the ElevenLabs voice choice and gives different transcript/tool trade-offs."]
+]} />
+
+The [LiveKit Expo guide](https://docs.livekit.io/transport/sdk-platforms/expo/) lists `@livekit/react-native`, `@livekit/react-native-webrtc`, `@livekit/react-native-expo-plugin`, `@config-plugins/react-native-webrtc`, and `livekit-client`. Add `expo-dev-client` for native development builds. [Pipecat's React Native guide](https://docs.pipecat.ai/api-reference/client/react-native/overview) supplies its own native transport paths. Neither works in Expo Go. Neither guide verifies this repo's exact Expo 57 / React Native 0.86.3 combination: pin tested versions only after native builds and real audio-routing checks.
+
+The initial pipeline candidate is **streaming speech recognition → streaming Gemini text model → streaming ElevenLabs speech**, with tested turn detection. It retains control of the chosen voice, scripture tools, and text trail. Benchmark ElevenLabs realtime transcription against a suitable Indian-language provider such as Sarvam and a confirmed Hindi-capable Deepgram configuration. Support labels do not establish within-sentence Hinglish quality: test “haan”, English company names, Hindi clauses, pauses, and background noise.
+
+Use `livekit-agents` with Google and ElevenLabs provider plugins and either its current supported audio turn detector or a tested local detector configuration. Keep provider IDs configurable; do not hard-code preview model names into the product architecture. The [current turn detector docs](https://docs.livekit.io/agents/logic/turns/turn-detector/) list Hindi for the audio detector. Hinglish still needs evaluation. [Pipecat Smart Turn](https://github.com/pipecat-ai/smart-turn) is an alternative detector/pipeline ecosystem; framework code and model weights have separate licenses to check before distribution.
+
+An October 2026 integration detail: [LiveKit retired ElevenLabs from hosted Inference on August 31, 2026](https://docs.livekit.io/agents/models/stt/elevenlabs/). Its provider plugin still works with a direct ElevenLabs account. Supply the project's key explicitly through settings and account for a separate bill; do not assume the framework's environment variable names match the existing ones. Configure realtime STT explicitly; the documented default can be batch transcription.
+
+Run [Gemini Live](https://docs.livekit.io/agents/models/realtime/plugins/gemini/) as a comparison behind the same application contracts. Its native audio voice is a distinct option; separate ElevenLabs TTS is not a universally supported combination. Current LiveKit pages disagree on some Gemini client-managed turn configurations. Pin SDK/model versions and test the exact setup instead of combining examples from different versions.
+
+## Application architecture
+
+<Diagram id="application-layers" frame="hide" caption="The live room is temporary. Application-owned context persists between visits." html={"<div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px'><section class='diagram-panel'><h3>Phone · Expo</h3><div class='diagram-node'>Temple scene + state reducer</div><div class='diagram-node'>Microphone / speaker · WebRTC</div><p class='diagram-muted'>REST: authenticated start, history, settings</p></section><section class='diagram-panel'><h3>FastAPI · trusted control</h3><div class='diagram-node'>Authenticate → authorize → session budget</div><div class='diagram-node'>Create session + short-lived room token</div><p class='diagram-muted'>Room metadata references a server-owned session</p></section><section class='diagram-panel'><h3>Live call · per-session worker</h3><div class='diagram-node'>LiveKit room ↔ streaming voice pipeline</div><div class='diagram-node'>Greeting policy · scripture · memory tools</div><p class='diagram-muted'>Write finalized events incrementally; stop at end</p></section><section class='diagram-panel'><h3>PostgreSQL · lasting context</h3><div class='diagram-node'>Messages · session summary · selective memory</div><div class='diagram-node'>Ongoing concerns · accepted follow-ups</div><p class='diagram-muted'>Worker reads/writes through shared domain services</p></section></div>"} />
+
+1. The app sends authenticated `POST /api/voice/sessions` with a stable request ID and privacy setting. FastAPI derives the user from the existing token, checks ownership, budget, and concurrent calls, then creates a call session and conversation. A stale duplicate request returns the same session or a clear ended state.
+2. The API issues a short-lived room-scoped token and dispatches one worker. Only microphone publication is needed; no camera or phone number. Worker metadata contains a session ID; the worker loads and validates server-owned context rather than trusting a client-supplied user ID.
+3. The phone connects, starts its audio session, and signals readiness. The worker greets once after readiness; user speech takes priority. A database greeting claim prevents repeated opening speech across worker retries.
+4. The streaming worker calls framework-neutral memory, scripture, concern, and policy services with explicit trusted identity/privacy arguments. Both call and text modes use the same domain rules.
+5. Save final user transcripts and reconciled assistant output incrementally, with stable IDs and interruption/delivery metadata. Partial captions are ephemeral. Generated text, queued audio, and played audio are different states; summaries cannot assume an unplayed recommendation reached the user.
+6. End/disconnect stops media and finalizes the call. A bounded durable summary job updates context and last-session end time. If it fails, future visits use existing history; do not lose the call or wait for the job to let the user leave.
+7. A later PostgreSQL-backed worker claims accepted follow-ups with leases and bounded retries. Use unique delivery keys and recheck consent/privacy before sending. External push delivery is at-least-once; suppress duplicate notifications where possible. There is no need for Redis/Celery/Temporal in the first small pilot. Add them only for measured queue/load requirements.
+
+## Data contracts
+
+Reuse `users`, `conversations`, `memories`, and existing durable text `chat_turns`. Add explicit migrations before new schema work; `Base.metadata.create_all` will not evolve existing tables. Suggested additions:
+
+<Table id="durable-data" columns={["Record", "Essential fields", "Purpose"]} rows={[
+  ["voice_sessions", "id, user_id, conversation_id, request_id, room_name, state, started_at, ended_at, heartbeat_at, greeting_claimed_at, context_version", "One owned call; lease, budget, lifecycle and welcome deduplication"],
+  ["voice_messages", "id, session_id, event_id, sequence, role, final_text, interrupted, delivery_state, source_refs", "Finalized voice history; stable event IDs and explicit playback uncertainty"],
+  ["conversation summary", "summary_text, covered_sequence, version, updated_at", "Bounded context with source boundary and stale-update prevention"],
+  ["ongoing_concerns", "id, user_id, description, source_message_id, chosen_action, reported_outcome, status, updated_at", "User-stated concern and follow-through without polluting permanent memory"],
+  ["followups · later phase", "id, user_id, concern_id, due_at, timezone, consent_at, state, attempt_count, lease_until, delivery_key", "Explicitly accepted future check-ins; cancel, snooze and retry"]
+]} />
+
+Use a shared history reader that normalizes text `ChatTurn` records and finalized voice messages into the same internal `ConversationMessage` shape. Keep their source IDs to avoid duplicates. This preserves the current text retry semantics without forcing interrupted speech into a completed user/reply pair. History endpoints and the drawer must support voice-only conversation entries; the present text-only message serializer will need adaptation.
+
+All queries, caches, summaries, and jobs are user-scoped. Private mode prevents shared-memory reads/writes and follow-up creation. Audio recording is off by default at the application and transport observability layers; disclose provider processing and retention separately. Transcripts remain conversation history, not a promise that no data is retained. Deleting a conversation must invalidate its derived summaries and concern evidence; cancel dependent pending follow-ups. Account deletion must end an active room and prevent a racing worker from recreating deleted data.
+
+A model can propose a concern or next action, but only user-stated or accepted actions become commitments. Use evidence and a trusted confirmation step for scheduled notifications. Tools are idempotent, owner-scoped, and cancellation-aware. An interruption does not necessarily roll back a tool that already executed; make transaction semantics explicit.
+
+## Code changes and reuse
+
+The current `run_turn` rebuilds an ADK session and returns a complete reply. Keep that text lane initially; use the LiveKit streaming Gemini plugin for calls. Extract the common instructions, scripture lookup, memory retrieval and mutation policy into plain Python domain functions. Existing ADK tool decorators become adapters. LiveKit tools become a second adapter. Do not carry ADK `ToolContext` or a single mutable turn `ContextVar` unchanged into overlapping voice tool calls.
+
+<AnnotatedCode id="existing-turn-proof" filename="backend/app/agent.py · existing lines 261–288" language="python" code={"async def run_turn(user_id, session_id, message, history, preferred_language=\"auto\", model=None):\n    # Existing implementation reconstructs an ADK session.\n    async for event in runner.run_async(...):\n        if event.is_final_response() and event.content:\n            result = ...\n    return result"} annotations={[{"lines":"3-6","label":"Existing complete-turn path","note":"Keep for text. A voice worker needs cancellable streaming and playout events rather than calling this for every spoken turn."}]} />
+
+<AnnotatedCode id="session-contract" filename="backend/app/voice_sessions.py · proposed new module" language="python" code={"# Proposed contract; not implemented.\nasync def start_voice_session(request, authenticated_user, db):\n    session = await create_or_resume_owned_session(\n        user_id=authenticated_user.id,\n        request_id=request.request_id,\n        private=request.private,\n    )\n    return await issue_scoped_room_access_and_dispatch(session)"} annotations={[{"lines":"3-6","label":"Trusted ownership","note":"Resolve identity from auth. Enforce privacy, idempotency and one active session before issuing room access."},{"lines":"8","label":"Bounded credentials","note":"Return short-lived access to one room; keep media/provider secrets on the server."}]} />
+
+<AnnotatedCode id="scene-contract" filename="mobile/src/components/CompanionScene.tsx · proposed new module" language="tsx" code={"// Proposed shape; implement after native audio spike.\ntype SceneState =\n  | \"idle\" | \"connecting\" | \"listening\"\n  | \"thinking\" | \"speaking\" | \"reconnecting\" | \"error\";\n// deriveSceneState(connection, mic, userSpeech, agentState, playout)\n// renders local still asset + truthful status + call controls\n// transport adapter owns audio; this component owns presentation"} annotations={[{"lines":"2-5","label":"Events drive the pose","note":"Connection failures and actual user speech override generated dialogue intent."},{"lines":"6-7","label":"Small presentation layer","note":"Reuse existing theme, safe areas and accessibility conventions; no video-avatar dependency."}]} />
+
+Change `mobile/App.tsx` to open the new `CallHome` after existing auth. Reuse `ConversationDrawer`, `MemorySettings`, and `SignInScreen`. Keep `ChatHome` accessible for text/history. Add `mobile/src/call/useVoiceSession.ts`, a transport adapter, `CompanionScene`, and a tested scene reducer. Extend `mobile/src/api.ts` with start/end/session-status helpers. Configure microphone/native WebRTC plugins in `mobile/app.json` and update permission copy. Coordinate audio focus with `expo-audio`; do not let the voice-note recorder and live call capture simultaneously.
+
+Backend additions: `voice_sessions.py`, `voice_worker.py`, `conversation_history.py`, framework-neutral `guidance.py` / memory services, `continuity.py`, migration files, and later `followup_worker.py`. Extend `models.py` and `schemas.py`. Register the authenticated session routes in `main.py`. Update drawer history serialization without changing existing text retry behavior. The exact package lockfiles change only after the native spike proves compatibility.
+
+## Reliability and cost
+
+No library makes this foolproof. The first release must recover predictably: interrupt speech quickly, stop cancelled output, tolerate reflective pauses, distinguish “haan/hmm” from a new request, reconnect without replaying a welcome, avoid duplicate memories, and show microphone/network failure in plain language. The [LiveKit events reference](https://docs.livekit.io/reference/agents/events/) exposes state and committed-history events, including interrupted messages. Use them as inputs, then verify playback/history accuracy on real devices; framework bookkeeping alone cannot prove what a human heard.
+
+Proposed engineering targets for the spike, not vendor guarantees: first response audio p50 under 1.5 seconds and p95 under 3 seconds after the user's actual turn ends; speech stopping within 500 ms of an intentional interruption. Record endpointing, first-token, first-audio and client-playout timing separately. Reflective pauses can justify slower endpointing. Quality and false interruption rates matter as much as speed.
+
+Track cost per completed conversation: room participant minutes, worker time, STT streamed minutes, model tokens, generated speech, and any optional noise processing. Idle connected calls still cost money. Cap idle/session duration and account usage, explain a limit before disconnecting, and retain access to history. Select region based on measured Indian-user network latency and provider availability. [Self-hosting LiveKit](https://docs.livekit.io/transport/self-hosting/) adds media networking, TURN, certificates, scaling and monitoring; postpone that operational burden until pilot usage justifies it. Cloud use does not remove provider/privacy review, nor do OSS licenses make model API usage free.
+
+## Delivery sequence
+
+**1. Prove audio before elaborate character work.** Build an isolated Android development-client spike on the current Expo/RN versions. Connect audio-only, stream Hindi/Hinglish, interrupt, reconnect, test speaker/headphones/Bluetooth, and end. Compare cascade and Gemini Live using the same prompts. Document and pin the working compatibility matrix; verify iOS separately before promising parity.
+
+**2. Ship one scene and the existing drawer.** Implement start, connection, listening, thinking, speaking, mute, end, captions, and text fallback. Bundle a consistent small asset set. Keep controls readable against photography and expose every state/control to accessibility services. Show “AI companion” without making the screen a settings page.
+
+**3. Add trustworthy continuity.** Persist finalized call messages, summaries and session timing. Add an ongoing concern only when useful and accepted. Implement greeting selection and one welcome per session. Test new user, same-day return, long absence, stale concern, sensitive topic, memory-off and private calls.
+
+**4. Add accepted follow-ups after continuity works.** Start with next-visit follow-through. Add scheduled notifications with consent, neutral text, quiet hours, cancellation and outbox retries once the pilot requests them. Measure usefulness rather than increasing message frequency.
+
+**5. Validate the product.** Recruit roughly 15 target people for a two-week directional pilot. Compare the scene/call experience with the current text experience, then compare generic openings with contextual continuity. Track completed conversations, interruptions, reported usefulness, voluntary returns, chosen actions and reported outcomes, privacy corrections, cost, and acceptance of a real paid offer. Separate visual novelty from repeated value; small-sample results are signals, not market proof.
+
+## Verification before release
+
+The existing mobile typecheck passed for baseline commit `83285ed`. Voice SDKs and the new design are proposals, not implemented or device-tested. No provider credentials or live calls were needed to research this plan.
+
+<Checklist id="release-checks" items={[
+  {"id":"native","label":"Build Android and iOS with pinned Expo/RN/WebRTC versions; exercise speaker, Bluetooth and incoming phone calls"},
+  {"id":"language","label":"Evaluate natural Hindi, English and within-sentence Hinglish; include names, long pauses and backchannels"},
+  {"id":"barge","label":"Interrupt spoken output and a running tool; confirm cancelled speech stays stopped and history preserves partial delivery"},
+  {"id":"network","label":"Switch Wi-Fi to cellular, lose connection, reconnect and crash a worker; assert one greeting and no duplicate persisted entries"},
+  {"id":"privacy","label":"Verify cross-user access denial, memory-off/private isolation, neutral notification text and deletion of derived context"},
+  {"id":"journey","label":"Sign in → call about a real concern → agree a step → end → return later → accept or decline continuation; assert saved evidence and timing in PostgreSQL"},
+  {"id":"faults","label":"Inject STT/LLM/TTS timeout, unavailable voice, expired token and denied microphone; recover or offer text without losing history"},
+  {"id":"budget","label":"Verify idle timeout, one active session per user, usage accounting and bounded provider retries"},
+  {"id":"regression","label":"Run npm run typecheck and existing PostgreSQL regression suite; add meaningful voice lifecycle/ownership tests"}
+]} />
+
+### Open Questions
+
+<QuestionForm id="product-decisions" questions={[
+  {"id":"voice-choice","title":"What should determine the first voice pipeline?","mode":"single","options":[{"id":"chosen-voice","label":"Keep a consistent chosen voice","detail":"Start with streaming STT + Gemini text + ElevenLabs TTS; benchmark native audio alongside it.","recommended":true},{"id":"native-audio","label":"Prioritize native audio conversation","detail":"Choose Gemini Live if the bakeoff wins; accept its voice and model-specific constraints."}]},
+  {"id":"followup-scope","title":"How should follow-through begin?","mode":"single","options":[{"id":"next-visit","label":"Offer continuation on the next visit","detail":"Prove useful memory and concern handling before external notifications.","recommended":true},{"id":"scheduled","label":"Also offer scheduled check-ins","detail":"Requires consent, push setup, quiet hours, cancellation and durable delivery jobs."}]},
+  {"id":"constraints","title":"What pilot budget or character/voice constraints should shape implementation?","mode":"freeform","placeholder":"Monthly budget, desired voice reference, languages or visual constraints"}
+]} submitLabel="Save decisions" />

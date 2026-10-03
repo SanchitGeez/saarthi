@@ -1,3 +1,34 @@
+# Current verification update — 2026-10-04
+
+The October 3 record below is historical. Companion naming, home scene and worker
+architecture have since changed: Saarthi is the product, Parth the companion, and
+LiveKit provides live conversations. See [the current handoff](agent-handoff.md).
+
+| Check | Last established result |
+| --- | --- |
+| Backend regression | 30 passed: 11 product, 11 voice, eight provider; real database with controlled external boundaries |
+| Mobile regression / typecheck | 16 passed; TypeScript passed |
+| Web / native bundle | Web export passed; Android plugin prebuild and JS/Hermes export passed; no APK/device call |
+| Real English Cloud call | Earlier Murf + Deepgram + OpenRouter preset passed audio, transcript, reply, memory, shared history, duplicate opening suppression, cleanup |
+| Real Hindi Cloud call | Current ElevenLabs + OpenRouter preset passed the mechanical flow; semantic answer quality still weak |
+| Hindi recorded speech | Real TTS/STT roundtrip passed; not a subjective pronunciation evaluation |
+| Browser | Phone/desktop layouts, dim/lit scene, captions, mute/End, Type and real OpenRouter typed reply checked |
+
+Latest Hindi recognition-delay sample improved to about 1.10 seconds after server
+VAD, versus about 20 seconds with manual commit. This measures transcript delay in
+one synthetic run, not end-to-end latency. Flash Lite sometimes repeated the user's
+request, answered its own greeting or missed memory requests in earlier runs. The
+final memory assertion passed, but Hindi advice quality needs broader evaluation.
+George is a user-approved temporary built-in voice because the free ElevenLabs plan
+blocked native Hindi library voices; an English accent remains possible.
+
+Physical-device call, echo/interruptions, Bluetooth, software keyboard, TalkBack,
+latest playback cache fix and voice-note Retry/Discard remain pending. SMTP,
+production deployment and customer demand have not been validated. Use the
+[current runbook](api-e2e-testing.md) and [gotchas](voice-debugging-gotchas.md).
+
+---
+
 # Product polish: changes and verification
 
 Date: 2026-10-03. This supplements [the API runbook](api-e2e-testing.md).

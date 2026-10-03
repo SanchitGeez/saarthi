@@ -10,12 +10,29 @@ shared. No fixed opener, required check-in, gap-based guilt, or invented outcome
 ## Run
 
 Set root `.env`: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`,
-`OPENROUTER_API_KEY`, `MURF_API_KEY` (existing `MURF_AI` also works), and
-`DEEPGRAM_API_KEY`. Keep all credentials on the API/worker.
+`OPENROUTER_API_KEY` and `ELEVEN_LABS_API_KEY`. Keep credentials on the API/worker.
+The current user-approved preset (2026-10-04) is:
 
 ```dotenv
 LLM_PROVIDER=openrouter
 OPENROUTER_MODEL=google/gemini-2.5-flash-lite
+STT_PROVIDER=elevenlabs
+ELEVEN_LABS_STT_MODEL=scribe_v2
+TTS_PROVIDER=elevenlabs
+VOICE_TTS_MODEL=eleven_multilingual_v2
+ELEVEN_LABS_TTS_MODEL=eleven_multilingual_v2
+ELEVEN_LABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb
+```
+
+Live recognition uses `scribe_v2_realtime`; recorded notes use `scribe_v2`.
+George is a built-in English voice and may retain an English accent in Hindi.
+The user chose it temporarily after the free plan blocked a native Hindi library
+voice through the API. Model names and public voice IDs are not credentials.
+
+To use the earlier tested Murf/Deepgram alternative, set the following and provide
+`MURF_API_KEY` (`MURF_AI` alias also works) and `DEEPGRAM_API_KEY`:
+
+```dotenv
 STT_PROVIDER=deepgram
 DEEPGRAM_MODEL=nova-3
 DEEPGRAM_LANGUAGE=multi
@@ -28,7 +45,7 @@ MURF_LOCALE=
 
 Restart both API and worker after editing `.env`. The three selectors are independent:
 `LLM_PROVIDER=gemini` uses the Google key/models; `STT_PROVIDER=elevenlabs` uses
-Scribe; `TTS_PROVIDER=elevenlabs` uses ElevenLabs Flash. Unused provider keys are
+Scribe; `TTS_PROVIDER=elevenlabs` uses the selected ElevenLabs TTS model. Unused provider keys are
 not required. Missing selected keys disable calls and prevent worker startup; a quota
 failure ends the call with an actionable message rather than silently billing another
 provider. Google has one explicitly configured fallback model; OpenRouter has no
@@ -78,8 +95,8 @@ with `--clear` after changing an Expo public environment variable to avoid stale
   user. Room tokens expire in two minutes, publish microphone only, and enable data
   for the readiness RPC. Metadata contains only a session ID, never memory or secrets.
 - `app/voice_worker.py`: explicit agent dispatch, one worker claim, named participant
-  binding, readiness, streaming Deepgram Nova-3 → OpenRouter Flash Lite → Murf
-  Falcon, configured through `app/providers.py`. Silero VAD and the multilingual turn detector support interruptions.
+  binding, readiness, streaming selected STT → LLM → TTS (currently ElevenLabs Scribe →
+  OpenRouter Flash Lite → ElevenLabs Multilingual v2), configured through `app/providers.py`. Silero VAD and the multilingual turn detector support interruptions.
   Gemini fallback is bounded and does not replay partially streamed responses.
   Worker models are prewarmed; a small fixed worker pool avoids unbounded idle workers.
 - `app/continuity.py`: bounded recent history and permitted memory. Private chats and
@@ -120,7 +137,7 @@ affect billing); ElevenLabs may decline zero-retention on non-enterprise plans. 
 and OpenRouter retention follows their account/provider settings.
 Do not market these calls as end-to-end encrypted or as provider-zero-retention.
 
-Hindi support is provided by Deepgram Nova-3 multilingual and the turn detector. Natural Hinglish,
+Hindi recognition currently uses ElevenLabs Scribe with Hindi/English hints; Deepgram Nova-3 multilingual is an alternative. Natural Hinglish,
 accents, pauses, Bluetooth routing and speaker echo still need real-device testing;
 no language-quality or latency benchmark is claimed by the automated suite.
 
@@ -147,20 +164,17 @@ received audio, duplicate-ready greeting suppression, speech recognition, genera
 reply, evidence-backed memory, shared history and cleanup. It is deliberately separate
 from the deterministic regression suite; provider quotas can block it.
 
-Testing on 2026-10-04 passed 27 backend regression tests and 16 mobile tests,
-TypeScript checking, web export, and the real Cloud spoken-exchange smoke test.
-The smoke test received actual Murf audio, recognized the synthetic utterance through
-Deepgram, generated an OpenRouter reply, saved an exact-evidence preference, suppressed
-a duplicate opening, and ended the room. The browser also verified lighting, captions,
-mute/End, Type, and a typed OpenRouter reply. A regression test covers refreshing the
-copied LiveKit turn context with current privacy and memory instructions.
+Testing on 2026-10-04 passed **30 backend regression tests**, **16 mobile tests**,
+TypeScript checking and web export. Android plugin prebuild and native JS/Hermes
+export passed earlier; an APK and physical-device call remain unverified without
+the Android SDK/device. Deterministic tests control selected external boundaries;
+they must not be described as real-provider tests.
 
-The initial ElevenLabs quota block is resolved for testing by selecting Murf + Deepgram.
-The memory-tool prompt is prioritized for explicit requests, including mixed requests;
-a single smoke test does not establish perfect model adherence. Indian English/Hindi
-voice character, Hinglish quality and interruption behavior need broader listening tests.
-Android plugin prebuild and native JS/Hermes export passed; an APK and physical-device
-call are not verified on this machine without an Android SDK/device.
+The earlier English Cloud smoke received actual Murf audio, recognized speech with
+Deepgram, generated an OpenRouter reply, saved exact-evidence memory, suppressed a
+duplicate opening and cleaned up the room. The latest Hindi smoke uses ElevenLabs
+and is described below. Browser checks covered lighting, captions, mute/End, Type
+and a real typed reply. Regression coverage protects current privacy/context refresh.
 
 ## ElevenLabs Hindi preset (2026-10-04)
 
@@ -195,3 +209,8 @@ exact-evidence memory and room cleanup. The free-account built-in voice can reta
 an English accent. The cheap answer model also showed inconsistent instruction
 following in earlier Hindi runs; passing the speech test is not a quality guarantee
 for Hindi advice. Model/voice listening evaluation remains necessary.
+
+See [the current handoff](agent-handoff.md), [testing runbook](api-e2e-testing.md)
+and [observed debugging gotchas](voice-debugging-gotchas.md) for the copied-context
+fix, duplicate workers, SDK option constraints, native playback/upload failures and
+remaining device checks.

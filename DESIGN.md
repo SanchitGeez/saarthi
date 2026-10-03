@@ -2,7 +2,7 @@
 
 ## Direction
 
-An adult opens Saarthi after a demanding day, in ordinary indoor light, wanting a calm spiritual conversation. The interface uses white as its primary surface, deep maroon for identity and actions, and restrained saffron for scripture and sacred accents. It feels devotional through a diya-and-lotus mark, Devanagari, and thoughtful typography, while chat controls stay familiar.
+An adult opens Saarthi after a demanding day, in ordinary indoor light, wanting a calm spiritual conversation. Type and settings use white as their primary surface, deep maroon for identity and actions, and restrained saffron for scripture and sacred accents. It feels devotional through a diya-and-lotus mark, Devanagari, and thoughtful typography, while chat controls stay familiar. The call home uses a dark photographic temple scene, described below.
 
 ## Palette
 
@@ -28,11 +28,11 @@ All reading text and placeholders must meet 4.5:1 on their actual surfaces. Fill
 
 Use the system sans for conversation, controls, and settings. Platform serif is reserved for the brand and introductory reflection. Body text is 16–17 px with 25–28 px line height. Sanskrit verses use the system Devanagari fallback at 18 px and 32 px line height. Respect system text scaling; avoid fixed-height text containers.
 
-The mark is an original geometric diya held by a lotus. Its SVG source and rendered launcher/favicon assets live in `mobile/assets`. Avoid character portraits, stock-guru imagery, and decorative landscape illustrations.
+The mark is an original geometric diya held by a lotus. Its SVG source and rendered launcher/favicon assets live in `mobile/assets`. The call scene uses the user-supplied portrait in `mobile/assets/temple.png`, cropped to hide the reference image’s baked-in mock controls. Do not infer priestly credentials from the portrait or add more poses in this iteration.
 
 ## Interaction
 
-Minimum touch target is 44 px. The composer is keyboard-aware on both native platforms. New chat is a local draft until the first message is sent. The app starts on that fresh surface every launch, with history in a searchable drawer. Sign out is present in the drawer and account settings.
+Minimum touch target is 44 px. The composer is keyboard-aware on both native platforms. Type creates a conversation on first Send; a call creates one on start. The app opens on the dim temple scene, with history in a searchable drawer. Sign out is present in the drawer and account settings.
 
 A failed user message remains visibly unfinished with Retry and Remove. Retry preserves the original message ID. Pending messages reconcile with the server after lost responses and app foregrounding. Scrolling a conversation should not drag the user to the bottom while they are reading earlier messages; the Latest control provides a return path.
 

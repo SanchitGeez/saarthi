@@ -1,3 +1,5 @@
+> Historical design/research record. Read [the current handoff](agent-handoff.md) and [product brief](../PRODUCT.md) for implemented scope and naming. These proposals/comparisons do not establish customer demand.
+
 # Product discovery — working brief
 
 Updated: 2026-10-03. This is an evolving proposal, not a finalized specification.

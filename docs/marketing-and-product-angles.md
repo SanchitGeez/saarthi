@@ -1,3 +1,5 @@
+> Historical design/research record. Read [the current handoff](agent-handoff.md) and [product brief](../PRODUCT.md) for implemented scope and naming. These proposals/comparisons do not establish customer demand.
+
 # Marketing, messaging, and product angles
 
 Updated: 2026-10-03. Living idea bank; draft messaging and product hypotheses are not validated claims.
