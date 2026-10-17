@@ -2,24 +2,11 @@
 .env.*
 !.env.example
 __pycache__/
-.pytest_cache/
-.ruff_cache/
+*.py[cod]
 .venv/
 .expo/
 node_modules/
 dist/
-build/
-*.py[cod]
-*.db
-*.mp3
-*.m4a
-*.webm
 mobile/android/
 mobile/ios/
-.agents/
-.codex/
-.aws/
-.plan-url
-
-# Local ADK/CLI session scratch files
-*.ses
+.DS_Store
