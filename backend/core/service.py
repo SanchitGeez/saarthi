@@ -73,7 +73,7 @@ def owned(db, user_id, conversation_id):
 
 
 def context(db, user):
-    records = data.knowledge(db, user.id)
+    records = data.knowledge_details(db, user.id)
     active = [r for r in records if r.status == "active"]
     details = [
         {"id": str(r.id), "type": r.type, "content": r.content, "status": r.status}
@@ -269,7 +269,7 @@ def list_conversations(factory, user_id, limit, before):
 
 
 def snapshot_knowledge(db, user_id):
-    records = data.knowledge(db, user_id)
+    records = data.knowledge_details(db, user_id)
     payload = [
         {
             "id": str(r.id),
@@ -294,7 +294,7 @@ def apply_changes(db, user_id, conv, changes):
     ids = [str(r.id) for r in changes.updates] + [str(i) for i in changes.deactivate_ids]
     if len(ids) != len(set(ids)) or any(i not in snapshot for i in ids):
         raise ValueError("Unknown or conflicting knowledge operations")
-    records = data.knowledge(db, user_id, include_deleted=True)
+    records = data.knowledge_details(db, user_id, include_deleted=True)
     current = {str(r.id): r for r in records}
     # Validate the whole set before applying anything, including ownership on tombstones.
     if any(i not in current for i in ids):
@@ -356,7 +356,7 @@ def apply_changes(db, user_id, conv, changes):
                 "status": r.status,
                 "manual_revision": r.manual_revision,
             }
-            for r in data.knowledge(db, user_id)
+            for r in data.knowledge_details(db, user_id)
             if r.type != "summary"
         ]
     )

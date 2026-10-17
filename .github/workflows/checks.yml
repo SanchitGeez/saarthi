@@ -12,7 +12,7 @@ jobs:
           POSTGRES_DB: saarthi
         ports: ['5432:5432']
         options: >-
-          --health-cmd 'pg_isready -U saarthi'
+          --health-cmd "pg_isready -U saarthi"
           --health-interval 5s --health-timeout 5s --health-retries 10
     defaults:
       run:

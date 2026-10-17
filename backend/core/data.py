@@ -32,8 +32,8 @@ def messages(db, conversation_id):
     )
 
 
-def knowledge(db, user_id, include_deleted=False):
-    query = select(Knowledge).where(Knowledge.user_id == user_id)
+def knowledge_details(db, user_id, include_deleted=False):
+    query = select(Knowledge).where(Knowledge.user_id == user_id, Knowledge.type != "summary")
     if not include_deleted:
         query = query.where(Knowledge.deleted_at.is_(None))
     return list(db.scalars(query.order_by(Knowledge.created_at, Knowledge.id)))
