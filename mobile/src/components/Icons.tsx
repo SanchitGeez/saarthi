@@ -1,6 +1,9 @@
 import Svg, { Circle, Ellipse, Path, Rect } from "react-native-svg";
 import type { ReactNode } from "react";
+import { Platform } from "react-native";
 import { colors } from "../theme";
+
+const decorativeSvgProps = Platform.OS === "web" ? { "aria-hidden": true } : { accessible: false };
 
 type Name = "menu" | "plus" | "send" | "mic" | "volume" | "close" | "settings" | "lock" | "more" | "leaf" | "back" | "check" | "trash" | "logout" | "retry" | "edit" | "book" | "search" | "down" | "stop" | "keyboard" | "phone" | "mic-off";
 
@@ -31,13 +34,13 @@ export function Icon({ name, size = 22, color = colors.ink }: { name: Name; size
     "mic-off": <><Path {...common} d="m3 3 18 18M9 5a3 3 0 0 1 6 1v6M5 11v1a7 7 0 0 0 12 5M12 19v3m-4 0h8" /></>,
     stop: <Rect x="6" y="6" width="12" height="12" rx="2" fill={color} />,
   };
-  return <Svg width={size} height={size} viewBox="0 0 24 24" accessible={false}>{paths[name]}</Svg>;
+  return <Svg width={size} height={size} viewBox="0 0 24 24" {...decorativeSvgProps}>{paths[name]}</Svg>;
 }
 
 // A diya held by an open lotus: clear at avatar size, meaningful without a portrait.
 export function SaarthiMark({ size = 38 }: { size?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 64 64" accessible={false}>
+    <Svg width={size} height={size} viewBox="0 0 64 64" {...decorativeSvgProps}>
       <Circle cx="32" cy="32" r="31" fill={colors.goldWash} />
       <Path d="M32 9c-5 7-8 10-8 15a8 8 0 0 0 16 0c0-5-4-9-8-15Z" fill={colors.accent} />
       <Path d="M32 19c-2 3-3 4-3 6a3 3 0 0 0 6 0c0-2-1-3-3-6Z" fill={colors.goldWash} />
