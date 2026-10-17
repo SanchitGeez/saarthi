@@ -6,7 +6,7 @@ async function api(path, options = {}) {
   const response = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' });
   const result = response.status === 204 ? null : await response.json();
   if (!response.ok) {
-    if (response.status === 401) { state.user = null; state.current = null; showEntry(); }
+    if (response.status === 401) resetSession();
     const error = new Error(result?.error?.message || 'Request failed. Please retry.');
     error.code = result?.error?.code;
     throw error;
@@ -95,10 +95,14 @@ $('profile-form').onsubmit = event => { event.preventDefault(); action('Saving p
   state.user = await api('/me', { method: 'PATCH', body: JSON.stringify({ name: $('name').value, gender: $('gender').value, age: Number($('age').value) }) });
   await enter();
 }); };
-$('logout').onclick = () => action('Signing out…', async () => {
-  await post('/auth/logout'); state.user = null; state.current = null; state.history = []; state.edit = null;
-  $('message').value = ''; $('knowledge-content').value = ''; $('knowledge-list').replaceChildren(); $('messages').replaceChildren();
+function resetSession() {
+  state.user = null; state.current = null; state.history = []; state.active = null; state.cursor = null;
+  $('message').value = ''; $('profile-form').reset(); resetKnowledgeForm();
+  $('knowledge-list').replaceChildren(); $('messages').replaceChildren(); $('history').replaceChildren();
   visible('phone-form', true); visible('otp-form', false); showEntry();
+}
+$('logout').onclick = () => action('Signing out…', async () => {
+  await post('/auth/logout'); resetSession();
 });
 $('new-chat').onclick = () => action('Opening conversation…', async () => { visible('chat', true); visible('knowledge-panel', false); await history(); await createChat(); });
 $('more-history').onclick = () => action('Loading history…', () => history(true));
