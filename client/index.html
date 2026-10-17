@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Saarthi</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header><h1>Saarthi</h1><span>A Gita-inspired AI guide · development prototype</span><button id="logout" hidden>Sign out</button></header>
+  <p id="notice" role="status" aria-live="polite"></p>
+  <p id="error" role="alert" hidden></p>
+  <main>
+    <section id="login" class="entry" hidden>
+      <h2>Sign in</h2>
+      <p>Mock OTP accepts any entered value. No SMS is sent and phone ownership is not verified. Use test numbers and avoid private information.</p>
+      <form id="phone-form"><label>Indian mobile number<input id="phone" type="tel" autocomplete="tel" required maxlength="25" placeholder="9876543210"></label><button>Continue</button></form>
+      <form id="otp-form" hidden><label>Mock OTP<input id="otp" autocomplete="one-time-code" required maxlength="100"></label><button>Sign in with mock OTP</button><button type="button" id="change-phone">Change number</button></form>
+    </section>
+    <section id="onboarding" class="entry" hidden>
+      <h2>A little about you</h2>
+      <form id="profile-form">
+        <label>Name<input id="name" required maxlength="100" autocomplete="given-name"></label>
+        <label>Gender<input id="gender" list="gender-options" required maxlength="100" placeholder="Self-describe or prefer not to say"></label>
+        <datalist id="gender-options"><option value="Woman"><option value="Man"><option value="Non-binary"><option value="Prefer not to say"></datalist>
+        <label>Age<input id="age" type="number" min="1" max="120" step="1" required></label>
+        <button>Save and start conversation</button>
+      </form>
+    </section>
+    <div id="workspace" hidden>
+      <aside aria-label="Conversation history">
+        <button id="new-chat">New conversation</button>
+        <h2>Recent conversations</h2>
+        <div id="history"></div><button id="more-history" hidden>Load older conversations</button>
+        <button id="show-knowledge">Inspect knowledge</button>
+      </aside>
+      <section id="chat" aria-label="Conversation">
+        <div class="chat-heading"><h2 id="chat-title">Conversation</h2><button id="end-chat" hidden>End conversation</button><button id="retry-extraction" hidden>Retry extraction</button></div>
+        <p id="chat-status"></p>
+        <div id="messages" aria-live="polite" aria-relevant="additions"></div>
+        <button id="retry-message" hidden>Retry reply</button>
+        <form id="message-form" hidden><label>Your message<textarea id="message" required maxlength="4000" rows="3"></textarea></label><button>Send</button></form>
+      </section>
+      <section id="knowledge-panel" hidden>
+        <div class="chat-heading"><h2>Knowledge · dev/test controls</h2><button id="close-knowledge">Back to conversation</button></div>
+        <p>Only active details and the latest active conversation summary are used for chat. Edits win over extraction already in flight.</p>
+        <form id="knowledge-form">
+          <label>Type<select id="knowledge-type"><option>factual</option><option>behavioural</option><option>contextual</option><option>summary</option></select></label>
+          <label>Content<textarea id="knowledge-content" required maxlength="2000" rows="3"></textarea></label>
+          <label>Status<select id="knowledge-status"><option>active</option><option>inactive</option></select></label>
+          <button id="save-knowledge">Add knowledge</button><button id="cancel-knowledge" type="button" hidden>Cancel edit</button>
+        </form>
+        <div id="knowledge-list"></div><button id="more-knowledge" hidden>Load more knowledge</button>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
