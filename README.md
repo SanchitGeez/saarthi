@@ -32,5 +32,8 @@ Start building in `mobile/App.tsx`. Check TypeScript with `npm run typecheck`.
 
 ## Backup
 
+Previous documentation and product plans are preserved in [archive/](archive/).
+They describe the previous application, not this starter.
+
 The previous application, including the last uncommitted icon change, is preserved
 on the remote branch `backup/full-app-2026-10-17`.
