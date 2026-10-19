@@ -21,6 +21,12 @@ def test_doval_schema_rejects_untrusted_fields():
         {**good, "summary": []},
         {**good, "additions": [{"type": "summary", "content": "bad"}]},
         {
+            "additions": [{"id": "fact_1", "category": "occupation", "text": "Engineer."}],
+            "updates": [],
+            "deactivations": [],
+            "summary": ["Discussed work."],
+        },
+        {
             **good,
             "updates": [
                 {"id": "not-a-uuid", "type": "factual", "content": "x", "status": "active"}
@@ -62,6 +68,8 @@ def test_pinned_adk_litellm_uses_native_schema_without_tools(monkeypatch):
         assert call["response_format"]["type"] == "json_schema"
         assert call["response_format"]["json_schema"]["strict"] is True
         assert call["response_format"]["json_schema"]["schema"]["additionalProperties"] is False
+        system_prompt = next(m["content"] for m in call["messages"] if m["role"] == "system")
+        assert json.dumps(doval.ChangeSet.model_json_schema(), ensure_ascii=False) in system_prompt
         assert sum(message["role"] == "user" for message in call["messages"]) == 1
         assert not any(message["role"] == "assistant" for message in call["messages"])
 
@@ -73,7 +81,7 @@ def test_missing_key_is_explicit_failure():
 
 @pytest.mark.live
 @pytest.mark.skipif(
-    not os.environ.get("OPENROUTER_API_KEY") or os.environ.get("RUN_LIVE_AGENT_TEST") != "1",
+    os.environ.get("RUN_LIVE_AGENT_TEST") != "1" or not Settings().openrouter_api_key,
     reason="Live OpenRouter credentials/opt-in absent",
 )
 def test_live_openrouter_both_agents():
