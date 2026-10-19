@@ -50,13 +50,14 @@ def test_pinned_adk_litellm_uses_native_schema_without_tools(monkeypatch):
         )
 
     monkeypatch.setattr(LiteLLMClient, "acompletion", completion)
-    settings = Settings(_env_file=None, groq_api_key="test-key")
+    settings = Settings(_env_file=None, openrouter_api_key="test-key")
     for _ in range(2):
         changes = asyncio.run(doval.extract(settings, {"transcript": [], "previous_knowledge": []}))
         assert changes.summary == ["Discussed work."]
     assert len(calls) == 2
     for call in calls:
-        assert call["model"] == "groq/openai/gpt-oss-20b"
+        assert call["model"] == "openrouter/minimax/minimax-m3.1-flash:free"
+        assert call["api_key"] == "test-key"
         assert not call.get("tools") and not call.get("functions")
         assert call["response_format"]["type"] == "json_schema"
         assert call["response_format"]["json_schema"]["strict"] is True
@@ -67,15 +68,15 @@ def test_pinned_adk_litellm_uses_native_schema_without_tools(monkeypatch):
 
 def test_missing_key_is_explicit_failure():
     with pytest.raises(runner.AgentFailure):
-        asyncio.run(saarthi.reply(Settings(_env_file=None, groq_api_key=""), {}))
+        asyncio.run(saarthi.reply(Settings(_env_file=None, openrouter_api_key=""), {}))
 
 
 @pytest.mark.live
 @pytest.mark.skipif(
-    not os.environ.get("GROQ_API_KEY") or os.environ.get("RUN_LIVE_AGENT_TEST") != "1",
-    reason="Live Groq credentials/opt-in absent",
+    not os.environ.get("OPENROUTER_API_KEY") or os.environ.get("RUN_LIVE_AGENT_TEST") != "1",
+    reason="Live OpenRouter credentials/opt-in absent",
 )
-def test_live_groq_both_agents():
+def test_live_openrouter_both_agents():
     settings = Settings()
     reply = asyncio.run(
         saarthi.reply(

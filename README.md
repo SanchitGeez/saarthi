@@ -17,7 +17,7 @@ local PostgreSQL 16 database).
 docker compose up -d db
 cd backend
 cp .env.example .env
-# Put your Groq key in backend/.env: GROQ_API_KEY=...
+# Put your OpenRouter key in backend/.env: OPENROUTER_API_KEY=...
 uv sync --locked
 uv run alembic upgrade head
 uv run uvicorn main:app --reload
@@ -36,9 +36,9 @@ chat and waits for extraction. A failed extraction offers Retry and does not blo
 New conversation. Knowledge inspection supports add/edit/delete and inactive
 records. All routes enforce ownership and onboarding.
 
-Without `GROQ_API_KEY`, login/onboarding and knowledge controls work; generation
+Without `OPENROUTER_API_KEY`, login/onboarding and knowledge controls work; generation
 returns a recoverable error. There are no fake model replies in the application.
-Set `AGENT_MODEL` to change the default `groq/openai/gpt-oss-20b` for both agents.
+Set `AGENT_MODEL` to change the default `openrouter/minimax/minimax-m3.1-flash:free` for both agents.
 The key stays on the server. Live language, Gita and extraction quality still need
 evaluation with your key; schema transport is tested locally through ADK/LiteLLM.
 
@@ -53,7 +53,7 @@ uv run ruff check .
 uv run ruff format --check .
 uv run alembic check
 node --check ../client/app.js
-# Optional real-provider smoke test, with GROQ_API_KEY configured:
+# Optional real-provider smoke test, with OPENROUTER_API_KEY configured:
 RUN_LIVE_AGENT_TEST=1 uv run pytest -q -m live
 ```
 

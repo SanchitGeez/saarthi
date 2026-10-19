@@ -86,8 +86,8 @@ retrieval, agent delegation, streaming or external tools.
 The lockfile pins ADK/LiteLLM. A mocked completion through the real ADK Runner and
 LiteLLM adapter verifies native `response_format=json_schema`, `strict=true`, no
 tools/functions and no carried-over assistant history. The opt-in live test checks
-both agents through Groq; it is not replaced with a tool-based output fallback.
-Actual Groq acceptance and quality remain unverified until credentials are supplied.
+both agents through OpenRouter; it is not replaced with a tool-based output fallback.
+Actual OpenRouter acceptance and quality remain unverified until credentials are supplied.
 
 Transcript content is limited to **64,000 UTF-8 bytes**; accepting a new message
 reserves 32,000 bytes for the maximum 8,000-character reply. Input messages allow

@@ -26,7 +26,7 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-markers = ["live: real Groq smoke test (requires GROQ_API_KEY and RUN_LIVE_AGENT_TEST=1)"]
+markers = ["live: real OpenRouter smoke test (requires OPENROUTER_API_KEY and RUN_LIVE_AGENT_TEST=1)"]
 
 [tool.ruff]
 target-version = "py311"

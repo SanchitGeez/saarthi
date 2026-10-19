@@ -90,26 +90,21 @@ The application database should be the canonical transcript store. ADK session
 handling must not create a conflicting second history. Exact session lifecycle
 still needs selection and an implementation check.
 
-Confirmed provider: Groq API, with the API key supplied later. Keep `GROQ_API_KEY`
-server-side; select a model through configuration rather than hardcoding it in
-prompts. Proposed integration: ADK `LiteLlm` connector → Groq, using a
-`groq/<model-id>` model name. No custom provider abstraction or separate proxy.
-Use the lower-cost `openai/gpt-oss-20b` for both agents initially, configured as
-`groq/openai/gpt-oss-20b` through LiteLLM. User requested a cheap initial model;
-this is the selected starting default, upgradeable through configuration.
-Groq lists $0.075 input / $0.30 output per million tokens and strict structured
-output support, checked 2026-10-17. Sources: [models and pricing](https://console.groq.com/docs/models)
-and [structured outputs](https://console.groq.com/docs/structured-outputs).
-No claim of evaluated Hindi/Hinglish, Gita or extraction quality yet.
+Confirmed provider: OpenRouter API, with the API key supplied later. Keep
+`OPENROUTER_API_KEY` server-side; select a model through configuration rather than
+hardcoding it in prompts. Integration: ADK `LiteLlm` connector → OpenRouter, using
+an `openrouter/<model-id>` model name. No custom provider abstraction or separate proxy.
+Both agents use MiniMax M3.1 Flash, configured as
+`openrouter/minimax/minimax-m3.1-flash:free` through LiteLLM. The free route is the
+currently listed model in [OpenRouter's catalog](https://openrouter.ai/minimax/minimax-m3.1-flash:free),
+checked 2026-10-20. It advertises `response_format` support; live strict-schema
+acceptance and Hindi/Hinglish, Gita and extraction quality remain unverified.
 
-Documentation checked 2026-10-17: [ADK LiteLLM connector](https://adk.dev/agents/models/litellm/),
-[LiteLLM Groq provider](https://docs.litellm.ai/docs/providers/groq), and
-[Groq structured outputs](https://console.groq.com/docs/structured-outputs).
-ADK documents the connector, LiteLLM documents Groq routing, and Groq documents
-model-dependent schema support. This is a documented integration path, not a
-live verification. Test Doval's schema through the pinned ADK/LiteLLM versions
-with the selected model before treating structured output as working. Do not
-silently substitute a tool-based output mechanism: Doval must not call tools.
+Integration documentation: [ADK LiteLLM connector](https://adk.dev/agents/models/litellm/)
+and [LiteLLM OpenRouter provider](https://docs.litellm.ai/docs/providers/openrouter).
+Test Doval's schema through the pinned ADK/LiteLLM versions with the selected
+model before treating structured output as working. Do not silently substitute a
+tool-based output mechanism: Doval must not call tools.
 
 ## Code quality and minimal low-level design
 
@@ -146,7 +141,7 @@ client/                # browser dev/test UI
   generic CRUD services, dependency-injection container, event bus or speculative
   domain framework. Split files only when their actual size warrants it.
 - Keep database transactions short; do not hold a transaction or row lock while
-  waiting for Groq. Use persisted claims/status for race-safe processing.
+  waiting for OpenRouter. Use persisted claims/status for race-safe processing.
 - Use database constraints for uniqueness and valid states, and validate untrusted
   values with schemas. Structured JSON does not replace ownership validation.
 - Use resource-oriented routes, consistent request/response shapes, bounded list
@@ -460,7 +455,7 @@ is saving what it learned; offer Retry if extraction fails.
 2. API payloads, greeting retries and failure recovery.
 3. Extraction retry recovery, contradictions and implementation of manual-edit/deletion precedence.
 4. ORM/migrations and final database constraints.
-5. ADK session handling and context limits; live Groq verification after key arrives.
+5. ADK session handling and context limits; live OpenRouter verification after key arrives.
 6. Final validation limits and session lifetime (no adult-only eligibility filter).
 7. Final prompts and targeted acceptance checks.
 

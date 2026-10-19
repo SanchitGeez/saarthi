@@ -9,7 +9,7 @@ class AgentFailure(Exception):
 
 async def invoke(settings, name, instruction, payload, output_schema=None):
     # Each invocation gets an ephemeral session: PostgreSQL is the only transcript store.
-    if not settings.groq_api_key:
+    if not settings.openrouter_api_key:
         raise AgentFailure()
     from google.adk.agents import LlmAgent
     from google.adk.models.lite_llm import LiteLlm
@@ -23,7 +23,7 @@ async def invoke(settings, name, instruction, payload, output_schema=None):
                 name=name,
                 model=LiteLlm(
                     model=settings.agent_model,
-                    api_key=settings.groq_api_key,
+                    api_key=settings.openrouter_api_key,
                     timeout=settings.agent_timeout_seconds,
                     num_retries=0,
                 ),

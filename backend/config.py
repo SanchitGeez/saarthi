@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     environment: Literal["development", "test", "production"] = "development"
     database_url: str = "postgresql+psycopg://saarthi:saarthi@localhost:5432/saarthi"
     app_origin: str = "http://localhost:8000"
-    groq_api_key: str = ""
-    agent_model: str = "groq/openai/gpt-oss-20b"
+    openrouter_api_key: str = ""
+    agent_model: str = "openrouter/minimax/minimax-m3.1-flash:free"
     agent_timeout_seconds: int = 60
     session_days: int = 7
 
