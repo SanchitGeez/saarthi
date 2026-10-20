@@ -45,6 +45,8 @@ class Conversation(Base):
     generation_message_id: Mapped[UUID | None]
     claim_token: Mapped[UUID | None]
     claim_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    voice_token: Mapped[UUID | None]
+    voice_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     extraction_input: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -70,17 +72,25 @@ class Message(Base):
     conversation_id: Mapped[UUID] = mapped_column(ForeignKey("conversations.id"))
     role: Mapped[str] = mapped_column(String(16))
     content: Mapped[str] = mapped_column(Text)
+    kind: Mapped[str] = mapped_column(String(16), default="reply", server_default="reply")
+    delivery_status: Mapped[str] = mapped_column(
+        String(16), default="complete", server_default="complete"
+    )
     reply_to_id: Mapped[UUID | None] = mapped_column(ForeignKey("messages.id"), unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (
         CheckConstraint("role IN ('user', 'assistant')"),
+        CheckConstraint("kind IN ('reply', 'voice_notice')", name="message_kind"),
+        CheckConstraint(
+            "delivery_status IN ('complete', 'interrupted')", name="message_delivery_status"
+        ),
         CheckConstraint("length(content) BETWEEN 1 AND 8000"),
         Index("message_order", "conversation_id", "created_at", "id"),
         Index(
             "one_greeting",
             "conversation_id",
             unique=True,
-            postgresql_where=text("role = 'assistant' AND reply_to_id IS NULL"),
+            postgresql_where=text("role = 'assistant' AND reply_to_id IS NULL AND kind = 'reply'"),
         ),
     )
 

@@ -5,13 +5,28 @@ import json
 class AgentFailure(Exception):
     def __init__(self, timeout=False):
         self.timeout = timeout
+        self.retryable = timeout
 
 
 async def invoke(settings, name, instruction, payload, output_schema=None):
+    return "".join(
+        [
+            chunk
+            async for chunk in invoke_stream(
+                settings, name, instruction, payload, output_schema, streaming=False
+            )
+        ]
+    ).strip()
+
+
+async def invoke_stream(
+    settings, name, instruction, payload, output_schema=None, *, streaming=True
+):
     # Each invocation gets an ephemeral session: PostgreSQL is the only transcript store.
     if not settings.openrouter_api_key:
         raise AgentFailure()
     from google.adk.agents import LlmAgent
+    from google.adk.agents.run_config import RunConfig, StreamingMode
     from google.adk.models.lite_llm import LiteLlm
     from google.adk.runners import Runner
     from google.adk.sessions import InMemorySessionService
@@ -40,9 +55,13 @@ async def invoke(settings, name, instruction, payload, output_schema=None):
             session = await sessions.create_session(app_name=name, user_id="invocation")
             runner = Runner(agent=agent, app_name=name, session_service=sessions)
             result = ""
+            streamed = ""
             async for event in runner.run_async(
                 user_id="invocation",
                 session_id=session.id,
+                run_config=RunConfig(
+                    streaming_mode=StreamingMode.SSE if streaming else StreamingMode.NONE
+                ),
                 new_message=types.Content(
                     role="user", parts=[types.Part(text=json.dumps(payload, ensure_ascii=False))]
                 ),
@@ -51,17 +70,40 @@ async def invoke(settings, name, instruction, payload, output_schema=None):
                     raise AgentFailure()
                 if event.get_function_calls():
                     raise AgentFailure()  # Never silently fall back to tool-based JSON output.
+                if streaming and event.partial and event.content:
+                    chunk = "".join(
+                        p.text or "" for p in event.content.parts or [] if not p.thought
+                    )
+                    streamed += chunk
+                    if len(streamed) > 8000:
+                        raise AgentFailure()
+                    if chunk:
+                        yield chunk
                 if event.is_final_response() and event.content:
                     result = "".join(
                         p.text or "" for p in event.content.parts or [] if not p.thought
                     )
+            if str(getattr(event, "finish_reason", "")).upper().endswith("MAX_TOKENS"):
+                raise AgentFailure()
             if not result.strip() or len(result) > (64000 if output_schema else 8000):
                 raise AgentFailure()
-            return result.strip()
+            if not streamed:
+                yield result.strip()
+            elif streamed.strip() != result.strip():
+                raise AgentFailure()
     except TimeoutError as exc:
         raise AgentFailure(timeout=True) from exc
     except AgentFailure:
         raise
     except Exception as exc:
         # Provider errors can contain prompts or credentials; callers expose a stable error only.
-        raise AgentFailure() from exc
+        failure = AgentFailure()
+        failure.retryable = getattr(exc, "status_code", None) in {
+            408,
+            429,
+            500,
+            502,
+            503,
+            504,
+        } or isinstance(exc, (ConnectionError, OSError))
+        raise failure from exc

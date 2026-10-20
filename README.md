@@ -1,6 +1,6 @@
 # Saarthi v2
 
-A text companion inspired by the Bhagavad Gita. One FastAPI app, PostgreSQL,
+A text and optional browser voice companion inspired by the Bhagavad Gita. One FastAPI app, PostgreSQL,
 independent Google ADK agents (`saarthi` for conversation, `doval` for extraction),
 and a plain same-origin browser testing client. The Expo `mobile/` starter is unchanged.
 
@@ -41,6 +41,15 @@ returns a recoverable error. There are no fake model replies in the application.
 Set `AGENT_MODEL` to change the default `openrouter/minimax/minimax-m3.1-flash:free` for both agents.
 The key stays on the server. Live language, Gita and extraction quality still need
 evaluation with your key; schema transport is tested locally through ADK/LiteLLM.
+
+## Optional browser voice
+
+The new [`backend/voice`](backend/voice/README.md) module connects Deepgram STT,
+Pipecat, the existing Saarthi agent, and Murf TTS over browser WebRTC. Install with
+`uv sync --locked --extra voice --python 3.12`, migrate the database, and configure
+the voice keys/voice ID in `.env.example`. Voice is disabled by default.
+See the module README for setup, recovery behavior and required microphone tests,
+and [the maintained architecture](docs/voice-architecture.md) for design decisions.
 
 ## Verify
 

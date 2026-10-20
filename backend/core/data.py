@@ -76,6 +76,7 @@ def assistant_reply(db, conversation_id, message_id):
         select(Message).where(
             Message.conversation_id == conversation_id,
             Message.role == "assistant",
+            Message.kind == "reply",
             Message.reply_to_id == message_id,
         )
     )

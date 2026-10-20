@@ -100,6 +100,8 @@ def bound_knowledge(payload):
 
 
 def claim(conv, settings):
+    if conv.voice_token and conv.voice_expires_at and conv.voice_expires_at > now():
+        raise Problem(409, "voice_active", "Leave voice before typing or ending this chat.")
     if conv.claim_expires_at and conv.claim_expires_at > now():
         raise Problem(
             409,
@@ -191,7 +193,14 @@ async def generate(factory, settings, user_id, conversation_id, message=None):
                 conv.title = message.content[:80]
         payload.update(
             opening=message is None,
-            transcript=[{"role": m.role, "content": m.content} for m in transcript],
+            transcript=[
+                {
+                    "role": m.role,
+                    "content": m.content,
+                    **({"interrupted": True} if m.delivery_status == "interrupted" else {}),
+                }
+                for m in transcript
+            ],
         )
         conv.generation_status = "processing"
         conv.generation_message_id = message_id
@@ -375,7 +384,12 @@ async def end_conversation(factory, settings, user_id, conversation_id):
             previous = snapshot_knowledge(db, user_id)
             conv.extraction_input = {
                 "transcript": [
-                    {"role": m.role, "content": m.content} for m in data.messages(db, conv.id)
+                    {
+                        "role": m.role,
+                        "content": m.content,
+                        **({"interrupted": True} if m.delivery_status == "interrupted" else {}),
+                    }
+                    for m in data.messages(db, conv.id)
                 ],
                 "previous_knowledge": previous,
             }

@@ -3,6 +3,13 @@ on: [push, pull_request]
 jobs:
   backend:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python: '3.11'
+            extra: ''
+          - python: '3.12'
+            extra: '--extra voice'
     services:
       postgres:
         image: postgres:16
@@ -26,11 +33,12 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: '0.10.2'
-          python-version: '3.11'
-      - run: uv sync --locked
+          python-version: ${{ matrix.python }}
+      - run: uv sync --locked ${{ matrix.extra }}
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run alembic upgrade head
       - run: uv run alembic check
       - run: uv run pytest -q
       - run: node --check ../client/app.js
+      - run: node --check ../client/voice.js

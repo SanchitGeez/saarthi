@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Saarthi</title>
   <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/voice.js" defer></script>
   <script src="/static/app.js" defer></script>
 </head>
 <body>
@@ -38,6 +39,17 @@
       <section id="chat" aria-label="Conversation">
         <div class="chat-heading"><h2 id="chat-title">Conversation</h2><button id="end-chat" hidden>End conversation</button><button id="retry-extraction" hidden>Retry extraction</button></div>
         <p id="chat-status"></p>
+        <div id="voice-controls">
+          <button id="voice-toggle" type="button">Start voice</button>
+          <button id="voice-stop-speaking" type="button" hidden>Stop speaking</button>
+          <button id="voice-mute" type="button" hidden>Mute microphone</button>
+          <button id="voice-play" type="button" hidden>Play audio</button>
+          <p id="voice-status" role="status" aria-live="polite"></p>
+          <small id="voice-capture"></small>
+          <p id="voice-transcript" aria-label="Your live speech"></p>
+          <p id="voice-caption" aria-label="Saarthi live caption" aria-live="polite"></p>
+          <audio id="voice-audio" autoplay></audio>
+        </div>
         <div id="messages" aria-live="polite" aria-relevant="additions"></div>
         <button id="retry-message" hidden>Retry reply</button>
         <form id="message-form" hidden><label>Your message<textarea id="message" required maxlength="4000" rows="3"></textarea></label><button>Send</button></form>

@@ -245,3 +245,10 @@ async def reply(settings, payload):
     from agents.runner import invoke
 
     return await invoke(settings, "saarthi", PROMPT, payload)
+
+
+async def stream(settings, payload):
+    from agents.runner import invoke_stream
+
+    async for chunk in invoke_stream(settings, "saarthi", PROMPT, payload):
+        yield chunk

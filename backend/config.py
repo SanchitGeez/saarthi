@@ -1,7 +1,7 @@
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,6 +14,19 @@ class Settings(BaseSettings):
     agent_model: str = "openrouter/minimax/minimax-m3.1-flash:free"
     agent_timeout_seconds: int = 60
     session_days: int = 7
+    voice_enabled: bool = False
+    deepgram_api_key: str = ""
+    murf_api_key: str = ""
+    murf_voice_id: str = ""
+    voice_checkin_seconds: int = Field(default=30, ge=10, le=120)
+    voice_idle_seconds: int = Field(default=120, ge=30, le=600)
+    voice_max_seconds: int = Field(default=1200, ge=60, le=3600)
+
+    @model_validator(mode="after")
+    def voice_configuration(self):
+        if self.voice_checkin_seconds >= self.voice_idle_seconds:
+            raise ValueError("Voice check-in must precede idle disconnect.")
+        return self
 
     @model_validator(mode="after")
     def safe_configuration(self):
