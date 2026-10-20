@@ -185,7 +185,9 @@ def test_generation_failure_and_recovery(client, monkeypatch, agents, factory):
 
     monkeypatch.setattr(saarthi, "reply", fail)
     identifier = str(uuid4())
-    assert client.post("/conversations", json={"id": identifier}).status_code == 504
+    failed = client.post("/conversations", json={"id": identifier})
+    assert failed.status_code == 504
+    assert len(failed.json()["error"]["error_id"]) == 32
     assert (
         client.get(f"/conversations/{identifier}").json()["conversation"]["generation_status"]
         == "failed"

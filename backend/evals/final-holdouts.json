@@ -1,0 +1,24 @@
+[
+  {
+    "id": "fresh-story-continuity",
+    "split": "holdout",
+    "language": "Hinglish (Roman script)",
+    "profile": {
+      "name": "Meera",
+      "gender": "Prefer not to say",
+      "age": 28
+    },
+    "knowledge": [],
+    "latest_summary": null,
+    "situation": "You want light company and a funny short story involving a cat and a bus stop. Ask a natural follow-up about an actual story detail, then another about a character motive or what happens next. Correct contradictions if they arise. Do not turn it into therapy.",
+    "persona": "Casual, curious, not automatically impressed. You notice when characters or actions change. No hidden emotional problem. Acknowledge a coherent answer naturally, but do not praise nonsense.",
+    "expected_behavior": [
+      "Tell a coherent entertaining original story involving the requested cat and bus stop.",
+      "No recycled halwai/chai example, forced moral or invented authentic religious episode.",
+      "Follow-up replies preserve established actors, motives and sequence.",
+      "Keep casual company without manufacturing distress or repeatedly asking about feelings."
+    ],
+    "max_user_turns": 6,
+    "first_user_message": "Ek chhoti mazedaar kahani sunao jisme ek billi aur bus stop ho. Chai, halwai ya seekh waali kahani nahi."
+  }
+]

@@ -1,8 +1,20 @@
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Change only this line, then restart the backend: "minimax" or "luna".
+SAARTHI_MODEL: Literal["minimax", "luna"] = "minimax"
+MODEL_PRESETS = {
+    "minimax": {
+        "model": "openrouter/minimax/minimax-m3.1-flash:free",
+        "provider": None,
+        "effort": "provider_default",
+    },
+    "luna": {"model": "openrouter/openai/gpt-6-luna", "provider": "openai", "effort": "medium"},
+}
+_ACTIVE_MODEL = MODEL_PRESETS[SAARTHI_MODEL]
 
 
 class Settings(BaseSettings):
@@ -11,8 +23,15 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://saarthi:saarthi@localhost:5432/saarthi"
     app_origin: str = "http://localhost:8000"
     openrouter_api_key: str = ""
-    agent_model: str = "openrouter/minimax/minimax-m3.1-flash:free"
+    agent_model: str = _ACTIVE_MODEL["model"]
+    agent_provider: str | None = Field(
+        default=_ACTIVE_MODEL["provider"], pattern=r"^[a-z0-9][a-z0-9_/-]{0,99}$"
+    )
     agent_timeout_seconds: int = 60
+    agent_max_output_tokens: int = Field(default=4096, ge=256, le=32768)
+    agent_reasoning_effort: Literal[
+        "none", "low", "medium", "high", "xhigh", "max", "provider_default"
+    ] = _ACTIVE_MODEL["effort"]
     session_days: int = 7
 
     @model_validator(mode="after")

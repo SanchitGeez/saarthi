@@ -212,6 +212,7 @@ async def generate(factory, settings, user_id, conversation_id, message=None):
             "generation_failed",
             "Reply failed. Retry the same message.",
             conversation_id=str(conversation_id),
+            error_id=exc.details["error_id"] if isinstance(exc, AgentFailure) else None,
         ) from None
     with factory.begin() as db:
         data.lock_user(db, user_id)

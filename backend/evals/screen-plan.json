@@ -1,0 +1,551 @@
+{
+  "candidates": [
+    {
+      "id": "minimax/minimax-m3.1-flash:free",
+      "model": "openrouter/minimax/minimax-m3.1-flash:free",
+      "provider": "minimax",
+      "effort": "medium",
+      "input_per_m": 0,
+      "output_per_m": 0,
+      "temperature": true,
+      "endpoint_snapshot": {
+        "name": "Minimax | minimax/minimax-m3.1-flash-20261019:free",
+        "model_id": "minimax/minimax-m3.1-flash:free",
+        "model_name": "MiniMax: MiniMax M3.1 Flash",
+        "context_length": 1000000,
+        "pricing": {
+          "prompt": "0",
+          "completion": "0",
+          "discount": 0
+        },
+        "provider_name": "Minimax",
+        "tag": "minimax",
+        "service_tier": null,
+        "quantization": "unknown",
+        "max_completion_tokens": 524288,
+        "max_prompt_tokens": null,
+        "supported_parameters": [
+          "reasoning",
+          "include_reasoning",
+          "max_tokens",
+          "temperature",
+          "top_p",
+          "tools",
+          "tool_choice",
+          "response_format",
+          "reasoning_effort"
+        ],
+        "supports_tool_choice": {
+          "none": false,
+          "auto": true,
+          "required": false,
+          "function": false
+        },
+        "status": 0,
+        "uptime_last_30m": 100,
+        "uptime_last_5m": 100,
+        "uptime_last_1d": 100,
+        "supports_implicit_caching": false,
+        "native_tools": {},
+        "supports_voice_cloning": false,
+        "supports_multiple_audio_references": false,
+        "supports_image_reference": false,
+        "supports_diarization": false,
+        "latency_last_30m": null,
+        "throughput_last_30m": null
+      }
+    },
+    {
+      "id": "qwen/qwen3.7-flash",
+      "model": "openrouter/qwen/qwen3.7-flash",
+      "provider": "alibaba",
+      "effort": "provider_default",
+      "input_per_m": 0.03,
+      "output_per_m": 0.13,
+      "temperature": true,
+      "endpoint_snapshot": {
+        "name": "Alibaba | qwen/qwen3.7-flash-20260727",
+        "model_id": "qwen/qwen3.7-flash",
+        "model_name": "Qwen: Qwen3.7 Flash",
+        "context_length": 1000000,
+        "pricing": {
+          "prompt": "0.00000003",
+          "completion": "0.00000013",
+          "input_cache_read": "0.000000006",
+          "input_cache_write": "0.000000038",
+          "discount": 0,
+          "overrides": [
+            {
+              "min_prompt_tokens": 32000,
+              "prompt": "0.0000001",
+              "completion": "0.0000004",
+              "input_cache_read": "0.00000002",
+              "input_cache_write": "0.000000125"
+            },
+            {
+              "min_prompt_tokens": 256000,
+              "prompt": "0.0000002",
+              "completion": "0.0000008",
+              "input_cache_read": "0.00000004",
+              "input_cache_write": "0.00000025"
+            }
+          ]
+        },
+        "provider_name": "Alibaba",
+        "tag": "alibaba",
+        "service_tier": null,
+        "quantization": "unknown",
+        "max_completion_tokens": 65536,
+        "max_prompt_tokens": 983616,
+        "supported_parameters": [
+          "reasoning",
+          "include_reasoning",
+          "max_tokens",
+          "temperature",
+          "top_p",
+          "seed",
+          "presence_penalty",
+          "response_format",
+          "logprobs",
+          "top_logprobs",
+          "tools",
+          "tool_choice"
+        ],
+        "supports_tool_choice": {
+          "none": true,
+          "auto": true,
+          "required": false,
+          "function": false
+        },
+        "status": 0,
+        "uptime_last_30m": 100,
+        "uptime_last_5m": 100,
+        "uptime_last_1d": 100,
+        "supports_implicit_caching": false,
+        "native_tools": {},
+        "supports_voice_cloning": false,
+        "supports_multiple_audio_references": false,
+        "supports_image_reference": false,
+        "supports_diarization": false,
+        "latency_last_30m": null,
+        "throughput_last_30m": null
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "provider": "open-inference/fp4",
+      "effort": "high",
+      "input_per_m": 0.091,
+      "output_per_m": 0.182,
+      "temperature": true,
+      "endpoint_snapshot": {
+        "name": "OpenInference | deepseek/deepseek-v4-flash-20260423",
+        "model_id": "deepseek/deepseek-v4-flash",
+        "model_name": "DeepSeek: DeepSeek V4 Flash 0423",
+        "context_length": 1048576,
+        "pricing": {
+          "prompt": "0.0000000304",
+          "completion": "0.000000136",
+          "input_cache_read": "0.0000000104",
+          "discount": 0
+        },
+        "provider_name": "OpenInference",
+        "tag": "open-inference/fp4",
+        "service_tier": null,
+        "quantization": "fp4",
+        "max_completion_tokens": 943718,
+        "max_prompt_tokens": null,
+        "supported_parameters": [
+          "reasoning",
+          "include_reasoning",
+          "temperature",
+          "max_tokens",
+          "stop",
+          "seed",
+          "response_format",
+          "top_p",
+          "frequency_penalty",
+          "presence_penalty",
+          "top_k",
+          "min_p",
+          "logit_bias",
+          "repetition_penalty",
+          "structured_outputs",
+          "tools",
+          "tool_choice",
+          "reasoning_effort"
+        ],
+        "supports_tool_choice": {
+          "none": true,
+          "auto": true,
+          "required": true,
+          "function": true
+        },
+        "status": 0,
+        "uptime_last_30m": 100,
+        "uptime_last_5m": 100,
+        "uptime_last_1d": 94.37109103544128,
+        "supports_implicit_caching": true,
+        "native_tools": {},
+        "supports_voice_cloning": false,
+        "supports_multiple_audio_references": false,
+        "supports_image_reference": false,
+        "supports_diarization": false,
+        "latency_last_30m": null,
+        "throughput_last_30m": null
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4.1-flash",
+      "model": "openrouter/deepseek/deepseek-v4.1-flash",
+      "provider": "open-inference/fp4",
+      "effort": "low",
+      "input_per_m": 0.056,
+      "output_per_m": 0.12,
+      "temperature": true,
+      "endpoint_snapshot": {
+        "name": "OpenInference | deepseek/deepseek-v4.1-flash-20260910",
+        "model_id": "deepseek/deepseek-v4.1-flash",
+        "model_name": "DeepSeek: DeepSeek V4.1 Flash",
+        "context_length": 1048576,
+        "pricing": {
+          "prompt": "0.000000056",
+          "completion": "0.00000012",
+          "input_cache_read": "0.0000000016",
+          "discount": 0
+        },
+        "provider_name": "OpenInference",
+        "tag": "open-inference/fp4",
+        "service_tier": null,
+        "quantization": "fp4",
+        "max_completion_tokens": 943718,
+        "max_prompt_tokens": null,
+        "supported_parameters": [
+          "reasoning",
+          "include_reasoning",
+          "temperature",
+          "max_tokens",
+          "stop",
+          "seed",
+          "top_p",
+          "frequency_penalty",
+          "presence_penalty",
+          "top_k",
+          "min_p",
+          "logit_bias",
+          "repetition_penalty",
+          "response_format",
+          "structured_outputs",
+          "tools",
+          "tool_choice",
+          "reasoning_effort"
+        ],
+        "supports_tool_choice": {
+          "none": true,
+          "auto": true,
+          "required": true,
+          "function": true
+        },
+        "status": 0,
+        "uptime_last_30m": 100,
+        "uptime_last_5m": 100,
+        "uptime_last_1d": 99.93055555555556,
+        "supports_implicit_caching": true,
+        "native_tools": {},
+        "supports_voice_cloning": false,
+        "supports_multiple_audio_references": false,
+        "supports_image_reference": false,
+        "supports_diarization": false,
+        "latency_last_30m": null,
+        "throughput_last_30m": null
+      }
+    },
+    {
+      "id": "openai/gpt-6-luna",
+      "model": "openrouter/openai/gpt-6-luna",
+      "provider": "openai",
+      "effort": "medium",
+      "input_per_m": 0.1,
+      "output_per_m": 0.5,
+      "temperature": false,
+      "endpoint_snapshot": {
+        "name": "OpenAI | openai/gpt-6-luna-20260922",
+        "model_id": "openai/gpt-6-luna",
+        "model_name": "OpenAI: GPT-6 Luna",
+        "context_length": 1050000,
+        "pricing": {
+          "prompt": "0.0000001",
+          "completion": "0.0000005",
+          "web_search": "0.01",
+          "input_cache_read": "0.00000001",
+          "input_cache_write": "0.000000125",
+          "discount": 0,
+          "overrides": [
+            {
+              "min_prompt_tokens": 272000,
+              "prompt": "0.0000002",
+              "completion": "0.00000075",
+              "input_cache_read": "0.00000002",
+              "input_cache_write": "0.00000025"
+            }
+          ]
+        },
+        "provider_name": "OpenAI",
+        "tag": "openai",
+        "service_tier": null,
+        "quantization": "unknown",
+        "max_completion_tokens": 128000,
+        "max_prompt_tokens": 922000,
+        "supported_parameters": [
+          "reasoning",
+          "include_reasoning",
+          "seed",
+          "max_tokens",
+          "response_format",
+          "structured_outputs",
+          "tools",
+          "tool_choice",
+          "verbosity",
+          "reasoning_effort"
+        ],
+        "supports_tool_choice": {
+          "none": true,
+          "auto": true,
+          "required": true,
+          "function": true
+        },
+        "status": 0,
+        "uptime_last_30m": 100,
+        "uptime_last_5m": 100,
+        "uptime_last_1d": 100,
+        "supports_implicit_caching": false,
+        "native_tools": {
+          "openrouter:web_search": {
+            "type": "web_search"
+          },
+          "openrouter:apply_patch": {
+            "type": "apply_patch"
+          }
+        },
+        "supports_voice_cloning": false,
+        "supports_multiple_audio_references": false,
+        "supports_image_reference": false,
+        "supports_diarization": false,
+        "latency_last_30m": null,
+        "throughput_last_30m": null
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4.1-flash-1017",
+      "model": "openrouter/deepseek/deepseek-v4.1-flash-1017",
+      "provider": "deepseek",
+      "effort": "low",
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
+      "temperature": true,
+      "endpoint_snapshot": {
+        "name": "DeepSeek | deepseek/deepseek-v4.1-flash-20261017",
+        "model_id": "deepseek/deepseek-v4.1-flash-1017",
+        "model_name": "DeepSeek: DeepSeek V4.1 Flash 1017",
+        "context_length": 1048576,
+        "pricing": {
+          "prompt": "0.00000015",
+          "completion": "0.0000006",
+          "input_cache_read": "0.000000003",
+          "discount": 0,
+          "overrides": [
+            {
+              "utc_days": [
+                "saturday",
+                "sunday"
+              ],
+              "prompt": "0.00000015",
+              "completion": "0.0000006",
+              "input_cache_read": "0.000000003"
+            },
+            {
+              "utc_start": 0,
+              "utc_end": 100,
+              "utc_days": [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday"
+              ],
+              "prompt": "0.00000015",
+              "completion": "0.0000006",
+              "input_cache_read": "0.000000003"
+            },
+            {
+              "utc_start": 100,
+              "utc_end": 400,
+              "utc_days": [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday"
+              ],
+              "prompt": "0.0000003",
+              "completion": "0.0000012",
+              "input_cache_read": "0.000000006"
+            },
+            {
+              "utc_start": 400,
+              "utc_end": 600,
+              "utc_days": [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday"
+              ],
+              "prompt": "0.00000015",
+              "completion": "0.0000006",
+              "input_cache_read": "0.000000003"
+            },
+            {
+              "utc_start": 600,
+              "utc_end": 1000,
+              "utc_days": [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday"
+              ],
+              "prompt": "0.0000003",
+              "completion": "0.0000012",
+              "input_cache_read": "0.000000006"
+            },
+            {
+              "utc_start": 1000,
+              "utc_end": 0,
+              "utc_days": [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday"
+              ],
+              "prompt": "0.00000015",
+              "completion": "0.0000006",
+              "input_cache_read": "0.000000003"
+            }
+          ]
+        },
+        "provider_name": "DeepSeek",
+        "tag": "deepseek",
+        "service_tier": null,
+        "quantization": "unknown",
+        "max_completion_tokens": 393216,
+        "max_prompt_tokens": null,
+        "supported_parameters": [
+          "reasoning",
+          "include_reasoning",
+          "max_tokens",
+          "temperature",
+          "top_p",
+          "stop",
+          "frequency_penalty",
+          "presence_penalty",
+          "logprobs",
+          "top_logprobs",
+          "tools",
+          "tool_choice",
+          "response_format",
+          "reasoning_effort"
+        ],
+        "supports_tool_choice": {
+          "none": true,
+          "auto": true,
+          "required": false,
+          "function": false
+        },
+        "status": 0,
+        "uptime_last_30m": 100,
+        "uptime_last_5m": 100,
+        "uptime_last_1d": 100,
+        "supports_implicit_caching": true,
+        "native_tools": {},
+        "supports_voice_cloning": false,
+        "supports_multiple_audio_references": false,
+        "supports_image_reference": false,
+        "supports_diarization": false,
+        "latency_last_30m": null,
+        "throughput_last_30m": null
+      }
+    },
+    {
+      "id": "google/gemini-3.8-flash",
+      "model": "openrouter/google/gemini-3.8-flash",
+      "provider": "google-ai-studio",
+      "effort": "medium",
+      "input_per_m": 0.825,
+      "output_per_m": 4.125,
+      "temperature": true,
+      "endpoint_snapshot": {
+        "name": "Google AI Studio | google/gemini-3.8-flash-20260902",
+        "model_id": "google/gemini-3.8-flash",
+        "model_name": "Google: Gemini 3.8 Flash",
+        "context_length": 1048576,
+        "pricing": {
+          "prompt": "0.00000075",
+          "completion": "0.00000375",
+          "image": "0.00000075",
+          "audio": "0.00000075",
+          "input_audio_cache": "0.000000075",
+          "web_search": "0.014",
+          "internal_reasoning": "0.00000375",
+          "input_cache_read": "0.000000075",
+          "input_cache_write": "0.0000000416666666666667",
+          "discount": 0.5
+        },
+        "provider_name": "Google AI Studio",
+        "tag": "google-ai-studio",
+        "service_tier": null,
+        "quantization": "unknown",
+        "max_completion_tokens": 65536,
+        "max_prompt_tokens": null,
+        "supported_parameters": [
+          "reasoning",
+          "include_reasoning",
+          "max_tokens",
+          "temperature",
+          "top_p",
+          "seed",
+          "response_format",
+          "structured_outputs",
+          "tool_choice",
+          "tools",
+          "reasoning_effort"
+        ],
+        "supports_tool_choice": {
+          "none": true,
+          "auto": true,
+          "required": true,
+          "function": true
+        },
+        "status": 0,
+        "uptime_last_30m": 100,
+        "uptime_last_5m": 100,
+        "uptime_last_1d": 100,
+        "supports_implicit_caching": false,
+        "native_tools": {
+          "openrouter:web_search": {
+            "type": "google_search"
+          }
+        },
+        "supports_voice_cloning": false,
+        "supports_multiple_audio_references": false,
+        "supports_image_reference": false,
+        "supports_diarization": false,
+        "latency_last_30m": null,
+        "throughput_last_30m": null
+      }
+    }
+  ],
+  "checked_at": "2026-10-20T12:21:15.478177+00:00"
+}

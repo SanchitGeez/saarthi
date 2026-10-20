@@ -65,6 +65,7 @@ def test_pinned_adk_litellm_uses_native_schema_without_tools(monkeypatch):
         assert call["model"] == "openrouter/minimax/minimax-m3.1-flash:free"
         assert call["api_key"] == "test-key"
         assert not call.get("tools") and not call.get("functions")
+        assert "reasoning_effort" not in call  # Doval keeps its existing provider behaviour.
         assert call["response_format"]["type"] == "json_schema"
         assert call["response_format"]["json_schema"]["strict"] is True
         assert call["response_format"]["json_schema"]["schema"]["additionalProperties"] is False
@@ -77,6 +78,139 @@ def test_pinned_adk_litellm_uses_native_schema_without_tools(monkeypatch):
 def test_missing_key_is_explicit_failure():
     with pytest.raises(runner.AgentFailure):
         asyncio.run(saarthi.reply(Settings(_env_file=None, openrouter_api_key=""), {}))
+
+
+@pytest.mark.parametrize(
+    ("mode", "code", "status", "finish"),
+    [
+        ("timeout", "timeout", None, None),
+        ("rate_limit", "rate_limit", 429, None),
+        ("provider", "provider_error", None, None),
+        ("empty", "empty_output", None, "STOP"),
+        ("long", "output_too_long", None, "STOP"),
+        ("truncated", "output_truncated", None, "MAX_TOKENS"),
+    ],
+)
+def test_agent_failure_records_safe_diagnostics(monkeypatch, caplog, mode, code, status, finish):
+    from google.adk.models.lite_llm import LiteLLMClient
+    from litellm import ModelResponse
+
+    class ProviderLimit(Exception):
+        status_code = 429
+
+    secret = "sensitive-provider-message-and-key"
+
+    async def completion(self, **kwargs):
+        if mode == "timeout":
+            raise TimeoutError(secret)
+        if mode == "rate_limit":
+            raise ProviderLimit(secret)
+        if mode == "provider":
+            raise RuntimeError(secret)
+        return ModelResponse(
+            choices=[
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": ""
+                        if mode == "empty"
+                        else "x" * 8001
+                        if mode == "long"
+                        else "partial",
+                    },
+                    "finish_reason": "length" if mode == "truncated" else "stop",
+                }
+            ],
+            **(
+                {
+                    "usage": {
+                        "prompt_tokens": 10,
+                        "completion_tokens": 4096,
+                        "total_tokens": 4106,
+                        "completion_tokens_details": {"reasoning_tokens": 4000},
+                    }
+                }
+                if mode == "truncated"
+                else {}
+            ),
+        )
+
+    monkeypatch.setattr(LiteLLMClient, "acompletion", completion)
+    settings = Settings(_env_file=None, openrouter_api_key=secret, agent_reasoning_effort="low")
+    observed = []
+    with runner.observe_calls(lambda *args: {}, observed.append):
+        with pytest.raises(runner.AgentFailure) as caught:
+            asyncio.run(saarthi.reply(settings, {"transcript": [], "private": secret}))
+    assert len(observed) == 1
+    assert observed[0]["status"] == "failed"
+    details = caught.value.details
+    assert details["code"] == code
+    assert details["http_status"] == status
+    assert details["finish_reason"] == finish
+    assert details["agent"] == "saarthi"
+    assert details["stage"] in {"generation", "validation"}
+    assert details["elapsed_ms"] >= 0
+    assert caught.value.timeout is (mode == "timeout")
+    logs = [record.message for record in caplog.records if record.name == "agents.runner"]
+    assert len(logs) == 1
+    assert details["error_id"] in logs[0]
+    assert secret not in logs[0]
+    assert secret not in json.dumps(details)
+    if mode == "truncated":
+        assert details["usage"] == {
+            "prompt_tokens": 10,
+            "completion_tokens": 4096,
+            "reasoning_tokens": 4000,
+        }
+        assert details["max_output_tokens"] == 4096
+        assert details["reasoning_effort"] == "low"
+
+
+@pytest.mark.parametrize("effort", ["none", "low", "medium", "provider_default"])
+def test_saarthi_reasoning_and_output_budget_reach_transport(monkeypatch, effort):
+    from google.adk.models.lite_llm import LiteLLMClient
+    from litellm import ModelResponse
+
+    calls = []
+
+    async def completion(self, **kwargs):
+        calls.append(kwargs)
+        return ModelResponse(
+            choices=[
+                {
+                    "message": {"role": "assistant", "content": "Aaj kya hua?"},
+                    "finish_reason": "stop",
+                }
+            ]
+        )
+
+    monkeypatch.setattr(LiteLLMClient, "acompletion", completion)
+    settings = Settings(
+        _env_file=None,
+        openrouter_api_key="test-key",
+        agent_reasoning_effort=effort,
+        agent_max_output_tokens=7777,
+    )
+    asyncio.run(saarthi.reply(settings, {"transcript": []}))
+    assert calls[0]["max_completion_tokens"] == 7777
+    if effort != "provider_default":
+        assert calls[0]["reasoning_effort"] == effort
+    else:
+        assert "reasoning_effort" not in calls[0]
+
+
+def test_saarthi_prompt_override_is_per_call(monkeypatch):
+    calls = []
+
+    async def invoke(settings, name, prompt, payload):
+        calls.append((name, prompt, payload))
+        return "reply"
+
+    monkeypatch.setattr(runner, "invoke", invoke)
+    payload = {"opening": True, "transcript": []}
+    asyncio.run(saarthi.reply(None, payload, prompt="candidate"))
+    asyncio.run(saarthi.reply(None, payload))
+    assert calls == [("saarthi", "candidate", payload), ("saarthi", saarthi.PROMPT, payload)]
 
 
 @pytest.mark.live

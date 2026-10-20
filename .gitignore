@@ -10,3 +10,5 @@ dist/
 mobile/android/
 mobile/ios/
 .DS_Store
+backend/evals/runs/
+.deepeval/

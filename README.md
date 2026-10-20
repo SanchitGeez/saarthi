@@ -38,7 +38,11 @@ records. All routes enforce ownership and onboarding.
 
 Without `OPENROUTER_API_KEY`, login/onboarding and knowledge controls work; generation
 returns a recoverable error. There are no fake model replies in the application.
-Set `AGENT_MODEL` to change the default `openrouter/minimax/minimax-m3.1-flash:free` for both agents.
+Change `SAARTHI_MODEL` near the top of [backend/config.py](backend/config.py) to
+`"minimax"` for development or `"luna"` for quality testing, then restart the backend.
+The preset selects model/provider/effort together (Doval retains default effort).
+Leave `AGENT_MODEL`, `AGENT_PROVIDER`, and `AGENT_REASONING_EFFORT` unset to use
+the switch; explicit environment settings override it.
 The key stays on the server. Live language, Gita and extraction quality still need
 evaluation with your key; schema transport is tested locally through ADK/LiteLLM.
 
@@ -66,6 +70,11 @@ the session cookie.
 
 See [working spec](docs/saarthi-v2-spec.md) and
 [implementation decisions](docs/saarthi-v2-implementation.md) for contracts and limits.
+
+For full-conversation experiments using the real Saarthi agent, adaptive DeepEval
+users, local human/Codex review and prompt comparison, see
+[the separate evals module](backend/evals/README.md). Its dependencies are optional
+(`uv sync --locked --group evals`); the web application does not import it.
 
 ## Mobile and archive
 
