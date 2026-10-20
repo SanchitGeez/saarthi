@@ -2,6 +2,10 @@
 
 ## Current checkpoint — supersedes historical planning below
 
+PR: [#3 — evals, diagnostics and model presets](https://github.com/SanchitGeez/saarthi/pull/3),
+open against main on `feat/saarthi-evals-and-model-presets`. Created as SanchitGeez;
+not merged or deployed. Tests: 54 passed / 1 optional live test skipped; Ruff passed.
+
 **V7 suite complete: 4/4 conversations, 50/50 calls; observed cost ~$0.04,
 remaining ~$9.63. Waiting for user feedback/approval.**
 See [V7_REVIEW.md](V7_REVIEW.md) for the full verdict and artifacts.

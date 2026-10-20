@@ -185,3 +185,8 @@ conversational suite are not. Separate voice design and output/ are excluded.
 The final v6 and v7 Markdown reports are now versioned under reports/ so reviewers
 can inspect the actual conversations in the PR. Only raw/intermediate run artifacts
 remain local. No additional generations were used to produce these snapshots.
+
+PR #3: https://github.com/SanchitGeez/saarthi/pull/3. Branch pushed via the existing
+SanchitGeez SSH identity. CLI/connector authentication was SanchitGta with read-only
+access to this repo, so PR creation used the existing SanchitGeez browser session.
+SSH push credentials do not authenticate the GitHub PR API. PR is open, not merged.
