@@ -33,6 +33,19 @@ class Settings(BaseSettings):
         "none", "low", "medium", "high", "xhigh", "max", "provider_default"
     ] = _ACTIVE_MODEL["effort"]
     session_days: int = 7
+    voice_enabled: bool = False
+    deepgram_api_key: str = ""
+    murf_api_key: str = ""
+    murf_voice_id: str = ""
+    voice_checkin_seconds: int = Field(default=30, ge=10, le=120)
+    voice_idle_seconds: int = Field(default=120, ge=30, le=600)
+    voice_max_seconds: int = Field(default=1200, ge=60, le=3600)
+
+    @model_validator(mode="after")
+    def voice_configuration(self):
+        if self.voice_checkin_seconds >= self.voice_idle_seconds:
+            raise ValueError("Voice check-in must precede idle disconnect.")
+        return self
 
     @model_validator(mode="after")
     def safe_configuration(self):

@@ -13,6 +13,12 @@ dependencies = [
   "uvicorn>=0.40,<1",
 ]
 
+[project.optional-dependencies]
+voice = [
+    "pipecat-ai[deepgram,webrtc]==0.0.108",
+    "pipecat-murf-tts==0.2.6",
+]
+
 [tool.uv]
 package = false
 

@@ -246,3 +246,122 @@ def test_live_openrouter_both_agents():
         )
     )
     assert changes.summary
+
+
+@pytest.mark.parametrize("streaming", [False, True])
+@pytest.mark.parametrize("mode", ["truncated", "mismatch", "rate_limit", "timeout", "empty"])
+def test_shared_runner_stream_failures_keep_diagnostics_and_retry_policy(
+    monkeypatch, streaming, mode
+):
+    from google.adk.events import Event
+    from google.adk.runners import Runner
+    from google.genai import types
+
+    class ProviderLimit(Exception):
+        status_code = 429
+
+    async def events(self, **kwargs):
+        if mode == "rate_limit":
+            raise ProviderLimit("private provider error")
+        if mode == "timeout":
+            raise TimeoutError("private provider error")
+        if mode == "empty":
+            return
+        if streaming:
+            yield Event(
+                author="saarthi",
+                partial=True,
+                content=types.Content(role="model", parts=[types.Part(text="Partial")]),
+            )
+        yield Event(
+            author="saarthi",
+            finish_reason="MAX_TOKENS" if mode == "truncated" else "STOP",
+            content=types.Content(role="model", parts=[types.Part(text="Different")]),
+        )
+
+    monkeypatch.setattr(Runner, "run_async", events)
+    settings = Settings(_env_file=None, openrouter_api_key="test")
+    observed = []
+
+    async def run():
+        if streaming:
+            return [chunk async for chunk in saarthi.stream(settings, {})]
+        return await saarthi.reply(settings, {})
+
+    with runner.observe_calls(lambda *args: {}, observed.append):
+        if mode == "mismatch" and not streaming:
+            assert asyncio.run(run()) == "Different"
+            assert observed[0]["status"] == "completed"
+            return
+        with pytest.raises(runner.AgentFailure) as caught:
+            asyncio.run(run())
+    assert (
+        caught.value.code
+        == {
+            "truncated": "output_truncated",
+            "mismatch": "invalid_output",
+            "rate_limit": "rate_limit",
+            "timeout": "timeout",
+            "empty": "empty_output",
+        }[mode]
+    )
+    assert caught.value.retryable is (mode in {"rate_limit", "timeout"})
+    assert len(observed) == 1 and observed[0]["status"] == "failed"
+    assert "private provider error" not in json.dumps(caught.value.details)
+
+
+def test_voice_stream_model_preset_and_usage_reach_native_transport(monkeypatch):
+    from google.adk.models.lite_llm import LiteLLMClient
+    from litellm.types.utils import ModelResponseStream
+
+    calls = []
+
+    async def chunks():
+        for text, finish in [("Haan, ", None), ("bolo.", None), (None, "stop")]:
+            yield ModelResponseStream(
+                model="gpt-6-luna",
+                choices=[
+                    {
+                        "index": 0,
+                        "delta": {"role": "assistant", "content": text},
+                        "finish_reason": finish,
+                    }
+                ],
+                **(
+                    {"usage": {"prompt_tokens": 20, "completion_tokens": 4, "total_tokens": 24}}
+                    if finish
+                    else {}
+                ),
+            )
+
+    async def completion(self, **kwargs):
+        calls.append(kwargs)
+        return chunks()
+
+    monkeypatch.setattr(LiteLLMClient, "acompletion", completion)
+    settings = Settings(
+        _env_file=None,
+        openrouter_api_key="test",
+        agent_model="openrouter/openai/gpt-6-luna",
+        agent_provider="openai",
+        agent_reasoning_effort="medium",
+        agent_max_output_tokens=7777,
+    )
+    observed = []
+
+    async def run():
+        return [chunk async for chunk in saarthi.stream(settings, {}, prompt="Voice candidate")]
+
+    with runner.observe_calls(lambda *args: {}, observed.append):
+        assert asyncio.run(run()) == ["Haan, ", "bolo."]
+    assert len(calls) == 1
+    assert calls[0]["stream"] is True
+    assert "temperature" not in calls[0]
+    assert calls[0]["max_completion_tokens"] == 7777
+    assert calls[0]["reasoning_effort"] == "medium"
+    assert calls[0]["extra_body"]["provider"]["only"] == ["openai"]
+    assert observed[0]["status"] == "completed"
+    assert observed[0]["usage"] == {
+        "prompt_tokens": 20,
+        "completion_tokens": 4,
+    }

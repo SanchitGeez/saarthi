@@ -46,6 +46,7 @@ function renderHistory() {
   $('new-chat').textContent = state.active ? 'Resume active conversation' : 'New conversation';
 }
 async function openChat(id) {
+  if (saarthiVoice.active && state.current?.conversation.id !== id) await saarthiVoice.stop();
   state.current = await api(`/conversations/${id}`);
   visible('chat', true); visible('knowledge-panel', false);
   renderChat(); renderHistory();
@@ -64,10 +65,11 @@ function renderChat() {
   $('chat-status').textContent = ended ? (conv.knowledge_status === 'completed' ? 'Ended · knowledge saved.' : 'Ended · knowledge has not been updated. Retry extraction; you can also start a new conversation.') : pending ? 'A reply is pending. Retry uses the saved message and will not duplicate it.' : 'Active conversation';
   for (const message of current.messages) {
     const node = text('article', ''); node.className = 'message';
-    node.append(text('strong', message.role === 'user' ? 'You' : 'Saarthi'), text('p', message.content));
+    node.append(text('strong', message.role === 'user' ? 'You' : 'Saarthi'), text('p', message.content + (message.delivery_status === 'interrupted' ? ' · Interrupted' : '')));
     $('messages').append(node);
   }
-  visible('end-chat', !ended); visible('message-form', !ended && !pending);
+  visible('end-chat', !ended); visible('message-form', !ended && !pending && !saarthiVoice.active);
+  visible('voice-controls', !ended && !pending);
   visible('retry-extraction', ended && conv.knowledge_status !== 'completed'); visible('retry-message', !ended && pending);
 }
 async function createChat() {
@@ -96,17 +98,20 @@ $('profile-form').onsubmit = event => { event.preventDefault(); action('Saving p
   await enter();
 }); };
 function resetSession() {
+  if (saarthiVoice.active) saarthiVoice.stop();
   state.user = null; state.current = null; state.history = []; state.active = null; state.cursor = null;
   $('message').value = ''; $('profile-form').reset(); resetKnowledgeForm();
   $('knowledge-list').replaceChildren(); $('messages').replaceChildren(); $('history').replaceChildren();
   visible('phone-form', true); visible('otp-form', false); showEntry();
 }
 $('logout').onclick = () => action('Signing out…', async () => {
+  await saarthiVoice.stop();
   await post('/auth/logout'); resetSession();
 });
 $('new-chat').onclick = () => action('Opening conversation…', async () => { visible('chat', true); visible('knowledge-panel', false); await history(); await createChat(); });
 $('more-history').onclick = () => action('Loading history…', () => history(true));
 $('message-form').onsubmit = event => { event.preventDefault(); action('Saarthi is thinking…', async () => {
+  if (saarthiVoice.active) return;
   const content = $('message').value.trim(); if (!content) return;
   const conversationId = state.current.conversation.id, id = crypto.randomUUID();
   let accepted = false;
@@ -125,6 +130,7 @@ $('retry-message').onclick = () => action('Retrying reply…', async () => {
   } finally { await openChat(conversation.id); await history(); }
 });
 async function endChat() {
+  await saarthiVoice.stop();
   const id = state.current.conversation.id;
   try { await post(`/conversations/${id}/end`); }
   finally { await openChat(id); await history(); }
@@ -135,6 +141,7 @@ function resetKnowledgeForm() {
   state.edit = null; $('knowledge-form').reset(); $('save-knowledge').textContent = 'Add knowledge'; visible('cancel-knowledge', false);
 }
 async function showKnowledge(more = false) {
+  if (saarthiVoice.active) await saarthiVoice.stop();
   const result = await api('/knowledge' + (more && state.knowledgeCursor ? '?after=' + state.knowledgeCursor : ''));
   state.knowledgeCursor = result.next_cursor; visible('more-knowledge', !!state.knowledgeCursor);
   visible('chat', false); visible('knowledge-panel', true); if (!more) $('knowledge-list').replaceChildren();
@@ -164,4 +171,18 @@ $('knowledge-form').onsubmit = event => { event.preventDefault(); action('Saving
 action('Loading…', async () => {
   try { state.user = await api('/me'); } catch (error) { if (error.code !== 'unauthenticated') throw error; }
   await enter();
+});
+
+$('voice-toggle').onclick = () => {
+  if (saarthiVoice.active) saarthiVoice.stop();
+  else if (state.current?.conversation.status === 'active') saarthiVoice.start(state.current.conversation.id);
+};
+window.addEventListener('voicechange', () => {
+  $('voice-toggle').textContent = saarthiVoice.active ? 'Leave voice' : 'Start voice';
+  visible('voice-stop-speaking', saarthiVoice.active); visible('voice-mute', saarthiVoice.active);
+  renderChat();
+});
+window.addEventListener('voicefinal', async () => {
+  if (!state.user || !state.current) return;
+  try { await openChat(state.current.conversation.id); await history(); } catch { /* Next normal refresh reports errors. */ }
 });

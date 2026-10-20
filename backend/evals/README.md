@@ -321,3 +321,19 @@ per-case JSON records partial/full turns and failures, and the parent `spending.
 and `billing.json` separate reservations/estimates from observed account counters.
 For the shared $4 guard, new stages must use the same round parent. Do not change
 the parent to bypass existing reservations. NEW-STAGE is a new directory name.
+
+### Voice compatibility
+
+Text and voice share the same runner, model presets, diagnostics and call observers.
+Frozen-prefix fixtures can set `"transport": "voice"` to call `saarthi.stream` with
+per-call prompt overrides. `voice-checkpoints.json` contains synthetic interruption
+and provider-recovery cases. Their transcripts retain only delivered prefixes and
+`interrupted: true`; recovery also retains the product's `voice_recovery` field.
+Use `--fixtures evals/voice-checkpoints.json` with `python -m evals.screen` and the
+usual plan, prompt, output and budget arguments when a paid run is authorised.
+
+Offline tests cover stream assembly, prompt isolation, truncation, transient error
+classification and observer records. CI runs `tests` and `evals/tests` on both the
+text-only Python 3.11 and voice-enabled Python 3.12 environments. These fixtures
+assess model responses; audio quality, STT/TTS accuracy and physical interruption
+latency still require the voice module's manual acceptance checks.

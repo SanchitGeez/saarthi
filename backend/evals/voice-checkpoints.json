@@ -1,0 +1,84 @@
+[
+  {
+    "id": "voice-interruption",
+    "transport": "voice",
+    "origin": "synthetic voice delivery contract",
+    "expected_behavior": [
+      "Respond to the correction about the manager.",
+      "Treat interrupted content as only the delivered prefix; do not invent its unspoken ending."
+    ],
+    "payload": {
+      "profile": {
+        "name": "Aman",
+        "gender": "Prefer not to say",
+        "age": 26
+      },
+      "knowledge": [],
+      "latest_summary": null,
+      "opening": false,
+      "transcript": [
+        {
+          "role": "assistant",
+          "content": "Haan, bolo."
+        },
+        {
+          "role": "user",
+          "content": "Office mein dikkat hai."
+        },
+        {
+          "role": "assistant",
+          "content": "Kaam ke",
+          "interrupted": true
+        },
+        {
+          "role": "user",
+          "content": "Ruko, kaam nahi, manager se dikkat hai."
+        }
+      ]
+    }
+  },
+  {
+    "id": "voice-recovery",
+    "transport": "voice",
+    "origin": "synthetic voice recovery contract",
+    "expected_behavior": [
+      "Continue the delivered prefix without repeating it.",
+      "Stay on the manager concern; do not assume an unspoken answer was heard."
+    ],
+    "payload": {
+      "profile": {
+        "name": "Aman",
+        "gender": "Prefer not to say",
+        "age": 26
+      },
+      "knowledge": [],
+      "latest_summary": null,
+      "opening": false,
+      "transcript": [
+        {
+          "role": "assistant",
+          "content": "Haan, bolo."
+        },
+        {
+          "role": "user",
+          "content": "Office mein dikkat hai."
+        },
+        {
+          "role": "assistant",
+          "content": "Kaam ke",
+          "interrupted": true
+        },
+        {
+          "role": "user",
+          "content": "Ruko, kaam nahi, manager se dikkat hai."
+        },
+        {
+          "role": "assistant",
+          "content": "Manager se",
+          "interrupted": true
+        }
+      ],
+      "voice_recovery": "Continue the interrupted reply without repeating the delivered prefix."
+    }
+  }
+]

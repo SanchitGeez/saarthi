@@ -24,10 +24,27 @@ def digest(value):
 
 async def checkpoint(settings, prompt, fixture):
     payload = fixture["payload"]
-    if set(payload) != {"profile", "knowledge", "latest_summary", "opening", "transcript"}:
+    transport = fixture.get("transport", "text")
+    if transport not in {"text", "voice"}:
+        raise ValueError("Checkpoint transport must be text or voice")
+    fields = {"profile", "knowledge", "latest_summary", "opening", "transcript"}
+    if transport == "voice" and "voice_recovery" in payload:
+        fields.add("voice_recovery")
+    if set(payload) != fields:
         raise ValueError("Checkpoint must contain exactly product context fields")
-    if not payload["transcript"] or payload["transcript"][-1]["role"] != "user":
+    transcript = payload["transcript"]
+    if transport == "voice" and "voice_recovery" in payload:
+        if (
+            not transcript
+            or transcript[-1].get("interrupted") is not True
+            or transcript[-1]["role"] != "assistant"
+        ):
+            raise ValueError("Voice recovery must end with the delivered assistant prefix")
+        transcript = transcript[:-1]
+    if not transcript or transcript[-1]["role"] != "user":
         raise ValueError("Checkpoint must end with latest user message")
+    if transport == "voice":
+        return "".join([chunk async for chunk in saarthi.stream(settings, payload, prompt=prompt)])
     return await saarthi.reply(settings, payload, prompt=prompt)
 
 

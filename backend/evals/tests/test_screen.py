@@ -297,3 +297,58 @@ def test_product_provider_pin_works_without_eval_policy(monkeypatch):
         "require_parameters": True,
     }
     assert "temperature" not in calls[0]
+
+
+@pytest.mark.parametrize("recovery", [False, True])
+def test_voice_checkpoint_streams_exact_delivered_history(monkeypatch, recovery):
+    from google.adk.events import Event
+    from google.adk.runners import Runner
+    from google.genai import types
+
+    from agents import saarthi
+
+    transcript = [
+        {"role": "assistant", "content": "Haan, bolo."},
+        {"role": "user", "content": "Office mein dikkat hai."},
+        {"role": "assistant", "content": "Kaam ke", "interrupted": True},
+        {"role": "user", "content": "Ruko, kaam nahi, manager se."},
+    ]
+    payload = {
+        "profile": {"name": "Test"},
+        "knowledge": [],
+        "latest_summary": None,
+        "opening": False,
+        "transcript": transcript,
+    }
+    if recovery:
+        transcript.append({"role": "assistant", "content": "Manager se", "interrupted": True})
+        payload["voice_recovery"] = (
+            "Continue the interrupted reply without repeating the delivered prefix."
+        )
+    captured = []
+
+    async def events(self, **kwargs):
+        assert kwargs["run_config"].streaming_mode.value == "sse"
+        assert self.agent.instruction == "Voice candidate"
+        captured.append(json.loads(kwargs["new_message"].parts[0].text))
+        for text, partial in [("Kya ", True), ("hua?", True), ("Kya hua?", False)]:
+            yield Event(
+                author="saarthi",
+                partial=partial,
+                content=types.Content(role="model", parts=[types.Part(text=text)]),
+            )
+
+    monkeypatch.setattr(Runner, "run_async", events)
+    settings = Settings(_env_file=None, openrouter_api_key="test")
+    observed = []
+    baseline = saarthi.PROMPT
+    with runner.observe_calls(lambda *args: {}, observed.append):
+        assert (
+            asyncio.run(
+                checkpoint(settings, "Voice candidate", {"transport": "voice", "payload": payload})
+            )
+            == "Kya hua?"
+        )
+    assert captured == [payload]
+    assert len(observed) == 1 and observed[0]["status"] == "completed"
+    assert saarthi.PROMPT == baseline

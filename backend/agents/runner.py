@@ -74,6 +74,7 @@ class AgentFailure(Exception):
     def __init__(self, timeout=False, *, code=None):
         self.code = code or ("timeout" if timeout else "invalid_output")
         self.timeout = timeout or self.code == "timeout"
+        self.retryable = self.timeout or self.code == "rate_limit"
         self.details = {
             "error_id": uuid4().hex,
             "code": self.code,
@@ -111,6 +112,19 @@ class AgentFailure(Exception):
 
 
 async def invoke(settings, name, instruction, payload, output_schema=None):
+    return "".join(
+        [
+            chunk
+            async for chunk in invoke_stream(
+                settings, name, instruction, payload, output_schema, streaming=False
+            )
+        ]
+    ).strip()
+
+
+async def invoke_stream(
+    settings, name, instruction, payload, output_schema=None, *, streaming=True
+):
     # Each invocation gets an ephemeral session: PostgreSQL is the only transcript store.
     started = monotonic()
     stage = "setup"
@@ -132,6 +146,7 @@ async def invoke(settings, name, instruction, payload, output_schema=None):
         if not settings.openrouter_api_key:
             raise AgentFailure(code="missing_credentials")
         from google.adk.agents import LlmAgent
+        from google.adk.agents.run_config import RunConfig, StreamingMode
         from google.adk.models.lite_llm import LiteLlm
         from google.adk.runners import Runner
         from google.adk.sessions import InMemorySessionService
@@ -167,10 +182,14 @@ async def invoke(settings, name, instruction, payload, output_schema=None):
             session = await sessions.create_session(app_name=name, user_id="invocation")
             runner = Runner(agent=agent, app_name=name, session_service=sessions)
             result = ""
+            streamed = ""
             stage = "generation"
             async for event in runner.run_async(
                 user_id="invocation",
                 session_id=session.id,
+                run_config=RunConfig(
+                    streaming_mode=StreamingMode.SSE if streaming else StreamingMode.NONE
+                ),
                 new_message=types.Content(
                     role="user", parts=[types.Part(text=json.dumps(payload, ensure_ascii=False))]
                 ),
@@ -198,6 +217,15 @@ async def invoke(settings, name, instruction, payload, output_schema=None):
                     )
                 if event.get_function_calls():
                     raise AgentFailure(code="unexpected_tool_call")
+                if streaming and event.partial and event.content:
+                    chunk = "".join(
+                        p.text or "" for p in event.content.parts or [] if not p.thought
+                    )
+                    streamed += chunk
+                    if len(streamed) > (64000 if output_schema else 8000):
+                        raise AgentFailure(code="output_too_long")
+                    if chunk:
+                        yield chunk
                 if event.is_final_response() and event.content:
                     result = "".join(
                         p.text or "" for p in event.content.parts or [] if not p.thought
@@ -209,8 +237,11 @@ async def invoke(settings, name, instruction, payload, output_schema=None):
                 raise AgentFailure(code="empty_output")
             if len(result) > (64000 if output_schema else 8000):
                 raise AgentFailure(code="output_too_long")
+            if streamed and streamed.strip() != result.strip():
+                raise AgentFailure(code="invalid_output")
             status = "completed"
-            return result.strip()
+            if not streamed:
+                yield result.strip()
     except AgentFailure as exc:
         exc.record(
             settings=settings,
@@ -226,6 +257,11 @@ async def invoke(settings, name, instruction, payload, output_schema=None):
         timeout = isinstance(exc, TimeoutError) or "timeout" in type(exc).__name__.lower()
         failure = AgentFailure(
             code="timeout" if timeout else "rate_limit" if http_status == 429 else "provider_error"
+        )
+        failure.retryable = (
+            failure.retryable
+            or http_status in {408, 500, 502, 503, 504}
+            or isinstance(exc, (ConnectionError, OSError))
         )
         failure.record(
             settings=settings,

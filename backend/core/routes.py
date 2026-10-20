@@ -45,7 +45,10 @@ def verify_otp(body: schemas.Verify, request: Request, response: Response):
 
 
 @router.post("/auth/logout", status_code=204)
-def logout(request: Request, response: Response, user=Depends(current_user)):
+async def logout(request: Request, response: Response, user=Depends(current_user)):
+    for session in list(request.app.state.voice_sessions.values()):
+        if session.user_id == user.id:
+            await session.close()
     service.logout(request.app.state.db, user.id, request.cookies["saarthi_session"])
     response.delete_cookie(
         "saarthi_session",

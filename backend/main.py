@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -15,7 +16,15 @@ from database import session_factory
 
 def create_app(settings=None, factory=None):
     settings = settings or Settings()
-    app = FastAPI(title="Saarthi v2", debug=False)
+
+    @asynccontextmanager
+    async def lifespan(app):
+        yield
+        for session in list(app.state.voice_sessions.values()):
+            await session.close()
+
+    app = FastAPI(title="Saarthi v2", debug=False, lifespan=lifespan)
+    app.state.voice_sessions = {}
     app.state.settings = settings
     app.state.db = factory or session_factory(settings.database_url)
 
@@ -47,7 +56,7 @@ def create_app(settings=None, factory=None):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "same-origin"
         response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+            "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
         )
         return response
 
@@ -103,6 +112,9 @@ def create_app(settings=None, factory=None):
         return {"status": "ok"}
 
     app.include_router(router)
+    from voice.routes import router as voice_router
+
+    app.include_router(voice_router)
     client = Path(__file__).resolve().parent.parent / "client"
     app.mount("/static", StaticFiles(directory=client), name="static")
 

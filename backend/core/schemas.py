@@ -96,6 +96,7 @@ class ConversationOut(Schema):
 
 
 class MessageOut(Schema):
+    delivery_status: Literal["complete", "interrupted"] = "complete"
     id: UUID
     role: str
     content: str
