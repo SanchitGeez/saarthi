@@ -51,6 +51,8 @@ retrieval tool or verified-source claim in this iteration. Exact quotations and
 verse references can be wrong. Prompt Saarthi to acknowledge uncertainty, avoid
 inventing citations and distinguish its interpretation from scripture quotations.
 Support English, Hindi and Hinglish, automatically following the user's language.
+Write Hindi words in Devanagari and English words in Latin script, even when the
+user types Roman Hindi.
 No language selector initially. Return complete replies rather than streaming.
 Confirmed conversation style: understand the situation first, then candidly
 challenge assumptions. Keep replies short by default and usually ask one useful
@@ -94,11 +96,11 @@ Confirmed provider: OpenRouter API, with the API key supplied later. Keep
 `OPENROUTER_API_KEY` server-side; select a model through configuration rather than
 hardcoding it in prompts. Integration: ADK `LiteLlm` connector → OpenRouter, using
 an `openrouter/<model-id>` model name. No custom provider abstraction or separate proxy.
-Both agents use MiniMax M3.1 Flash, configured as
-`openrouter/minimax/minimax-m3.1-flash:free` through LiteLLM. The free route is the
-currently listed model in [OpenRouter's catalog](https://openrouter.ai/minimax/minimax-m3.1-flash:free),
-checked 2026-10-20. It advertises `response_format` support; live strict-schema
-acceptance and Hindi/Hinglish, Gita and extraction quality remain unverified.
+Both agents currently use GPT-6 Luna at low reasoning effort, configured as
+`openrouter/openai/gpt-6-luna` through LiteLLM. OpenRouter lists $0.10/M input and
+$0.50/M output tokens, and supports JSON-schema structured output. Application-side
+validation remains required; live Hindi/Hinglish, Gita and extraction quality
+remain unverified. [OpenRouter model listing](https://openrouter.ai/openai/gpt-6-luna)
 
 Integration documentation: [ADK LiteLLM connector](https://adk.dev/agents/models/litellm/)
 and [LiteLLM OpenRouter provider](https://docs.litellm.ai/docs/providers/openrouter).

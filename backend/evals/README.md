@@ -11,9 +11,9 @@ metric scores, which is a different workflow from the human feedback chosen here
 Current dialogue prompt: `prompts/grounded-v4.txt`. Short common Hindi, no unsolicited
 document templates, and stronger emotion/memory/injection handling. See
 `MODEL_BUDGET.md` for the difference between per-call output, reasoning, context and
-account rate limits. The app retains `provider_default` reasoning; experiments can
-override effort explicitly. Doval always retains provider-default reasoning.
-Low-effort trials exposed language issues, so that setting was not promoted.
+account rate limits. The current app preset uses GPT-6 Luna at low effort for both
+agents; experiment runs retain their recorded model and effort settings. Earlier
+low-effort trials exposed language issues, so review output quality while using it.
 Runtime overrides as well as prompt changes are recorded in each run.
 
 Start with [LEARNINGS.md](LEARNINGS.md) for experiment history, current limitations,
@@ -29,7 +29,7 @@ for the checked model shortlist, prices, parameter compatibility and account bud
 From `backend/`:
 
 ```sh
-uv sync --locked --group evals
+uv sync --locked --extra voice --group evals
 uv run --group evals python -m evals list
 
 # Uses backend/.env / environment: OPENROUTER_API_KEY, AGENT_MODEL.
@@ -285,12 +285,12 @@ keep per-call ceiling-rate usage estimates distinct from billed charges.
 
 Luna temperature omission also applies without eval hooks in the shared runner,
 using its verified exact model ID. Selecting Luna in the product therefore does
-not depend on the eval policy. The configured default model remains MiniMax.
+not depend on the eval policy. The current configured default model is GPT-6 Luna.
 
 ## Current model switch and persona experiment
 
 See [ROUND_RESULTS.md](ROUND_RESULTS.md) for completed comparisons and limits.
-At the top of `../config.py`, change `SAARTHI_MODEL` between `"minimax"` (development)
+At the top of `../config.py`, change `SAARTHI_MODEL` between `"gemma"` (free development)
 and `"luna"` (better-quality testing), then restart the backend. The preset selects
 model, provider and effort together. `AGENT_MODEL`, `AGENT_PROVIDER` and
 `AGENT_REASONING_EFFORT` environment values override their respective defaults;
@@ -337,3 +337,16 @@ classification and observer records. CI runs `tests` and `evals/tests` on both t
 text-only Python 3.11 and voice-enabled Python 3.12 environments. These fixtures
 assess model responses; audio quality, STT/TTS accuracy and physical interruption
 latency still require the voice module's manual acceptance checks.
+
+## Hindi/English script adherence
+
+Production Saarthi writes Hindi words in Devanagari and English words in Latin
+script, even for Romanized user input or older Romanized chat history. English-only
+requests remain English. Both text replies and voice streaming share this prompt.
+`script-checkpoints.json` provides seven synthetic fixed-prefix development cases
+for `evals.screen`, covering both scripts, mixed work vocabulary, English-only,
+legacy history, a conflicting Roman-script request and voice streaming. Use the
+current production prompt and runtime model/effort when repeating this screen;
+the screen CLI's default prompt is the historical v4 snapshot.
+See [the reviewed seven-reply run](reports/script-adherence-20261025.md) for results,
+cost records and validation limits.

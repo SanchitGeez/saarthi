@@ -28,9 +28,11 @@ def observe_calls(before, after):
 
 
 def reasoning_effort(settings, agent):
-    # Keep Doval's extraction behaviour unchanged while testing dialogue effort.
+    # Apply the selected effort to both product agents and the eval simulator.
     return (
-        settings.agent_reasoning_effort if agent in {"saarthi", "eval_user"} else "provider_default"
+        settings.agent_reasoning_effort
+        if agent in {"saarthi", "doval", "eval_user"}
+        else "provider_default"
     )
 
 

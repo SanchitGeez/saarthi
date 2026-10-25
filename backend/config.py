@@ -4,15 +4,15 @@ from urllib.parse import urlparse
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Change only this line, then restart the backend: "minimax" or "luna".
-SAARTHI_MODEL: Literal["minimax", "luna"] = "minimax"
+# Change only this line, then restart the backend: "gemma" or "luna".
+SAARTHI_MODEL: Literal["gemma", "luna"] = "luna"
 MODEL_PRESETS = {
-    "minimax": {
-        "model": "openrouter/minimax/minimax-m3.1-flash:free",
+    "gemma": {
+        "model": "openrouter/google/gemma-4-31b-it:free",
         "provider": None,
         "effort": "provider_default",
     },
-    "luna": {"model": "openrouter/openai/gpt-6-luna", "provider": "openai", "effort": "medium"},
+    "luna": {"model": "openrouter/openai/gpt-6-luna", "provider": "openai", "effort": "low"},
 }
 _ACTIVE_MODEL = MODEL_PRESETS[SAARTHI_MODEL]
 
@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     session_days: int = 7
     voice_enabled: bool = False
     deepgram_api_key: str = ""
+    cartesia_api_key: str = ""
+    cartesia_voice_id: str = "4877b818-c7fe-4c89-b1cf-eadf8e23da72"  # Rohan
     murf_api_key: str = ""
     murf_voice_id: str = ""
     voice_checkin_seconds: int = Field(default=30, ge=10, le=120)

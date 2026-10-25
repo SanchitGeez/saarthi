@@ -85,7 +85,8 @@ def test_expired_lease_can_be_replaced_without_stale_release(client, factory):
     store.release(factory, user_id, conversation_id, new)
 
 
-def test_voice_start_is_disabled_and_authorized(client):
+def test_voice_start_is_disabled_and_authorized(client, settings):
+    settings.voice_enabled = False
     assert (
         client.post(
             "/voice/sessions", json={"id": str(uuid4()), "conversation_id": str(uuid4())}
@@ -101,11 +102,24 @@ def test_voice_start_is_disabled_and_authorized(client):
     )
 
 
+def test_voice_start_requires_cartesia_credentials(client, settings):
+    settings.voice_enabled = True
+    settings.deepgram_api_key = settings.openrouter_api_key = "test"
+    settings.murf_api_key = settings.murf_voice_id = "retained-murf-config"
+    settings.cartesia_api_key = ""
+    sign_in(client)
+    response = client.post(
+        "/voice/sessions", json={"id": str(uuid4()), "conversation_id": start(client)}
+    )
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "voice_not_configured"
+    assert "Cartesia" in response.json()["error"]["message"]
+
+
 def test_voice_start_retry_ownership_stop_and_logout(client, settings, factory):
     pytest.importorskip("pipecat")
     settings.voice_enabled = True
-    settings.deepgram_api_key = settings.murf_api_key = settings.openrouter_api_key = "test"
-    settings.murf_voice_id = "test-voice"
+    settings.deepgram_api_key = settings.cartesia_api_key = settings.openrouter_api_key = "test"
     sign_in(client)
     conv = start(client)
     body = {"id": str(uuid4()), "conversation_id": conv}
@@ -161,18 +175,18 @@ def test_interrupt_cancels_generation_and_saves_only_delivered_text(monkeypatch)
 
     async def run():
         session = VoiceSession(None, Settings(_env_file=None), uuid4(), uuid4(), "", uuid4())
-        session.agent = SimpleNamespace(broadcast_interruption=asyncio.sleep)
         session.message_id = uuid4()
         session.response_id = "old"
         session.delivery = Delivery(text="Haan bolo aur suno", sent_seconds=0.8)
         session.delivery.timestamps(["Haan", "bolo", "aur", "suno"], [0.2, 0.5, 0.8, 1.2])
         session.response_task = asyncio.create_task(asyncio.sleep(30))
 
-        # No-argument Pipecat API.
-        async def clear():
-            pass
+        async def clear(frame):
+            from pipecat.frames.frames import InterruptionFrame
 
-        session.agent.broadcast_interruption = clear
+            assert isinstance(frame, InterruptionFrame)
+
+        session.agent = SimpleNamespace(push_frame=clear)
         await session.interrupt()
         assert session.response_id is None
         assert session.response_task is None
@@ -214,11 +228,45 @@ def test_retry_preserves_delivered_prefix_and_only_synthesizes_suffix(monkeypatc
         async def noop(*args):
             pass
 
-        session.agent = SimpleNamespace(push_frame=push, broadcast_interruption=noop)
+        session.agent = SimpleNamespace(push_frame=push)
         session.tts = SimpleNamespace(_disconnect=noop, _connect=noop)
         await session._respond(None, "Haan bolo")
         assert texts == ["Haan bolo", " bolo"]
         assert saved == [("Haan bolo", False)]
+
+    asyncio.run(run())
+
+
+def test_cancelled_interruption_request_still_stops_and_saves_reply(monkeypatch):
+    pytest.importorskip("pipecat")
+    from config import Settings
+    from voice.session import VoiceSession
+
+    saved = []
+    monkeypatch.setattr(store, "commit", lambda *args: saved.append(args[-2:]))
+
+    async def run():
+        session = VoiceSession(None, Settings(_env_file=None), uuid4(), uuid4(), "", uuid4())
+        session.message_id = uuid4()
+        session.delivery = Delivery(text="Haan bolo", sent_seconds=1)
+        session.delivery.timestamps(["Haan", "bolo"], [0.2, 0.9])
+        old = session.response_task = asyncio.create_task(asyncio.sleep(30))
+        clearing, release = asyncio.Event(), asyncio.Event()
+
+        async def push(frame):
+            clearing.set()
+            await release.wait()
+
+        session.agent = SimpleNamespace(push_frame=push)
+        request = asyncio.create_task(session.interrupt())
+        await asyncio.wait_for(clearing.wait(), 2)
+        request.cancel()
+        release.set()
+        with pytest.raises(asyncio.CancelledError):
+            await request
+        assert old.cancelled()
+        assert session.response_task is None
+        assert saved == [("Haan", True)]
 
     asyncio.run(run())
 
@@ -334,15 +382,12 @@ def test_cancel_during_retry_stops_pending_attempt(monkeypatch):
             if isinstance(frame, LLMFullResponseEndFrame):
                 session.provider_failure(True)
 
-        async def clear():
-            pass
-
         def event(kind, **values):
             if kind == "retrying":
                 waiting.set()
 
         session.event = event
-        session.agent = SimpleNamespace(push_frame=push, broadcast_interruption=clear)
+        session.agent = SimpleNamespace(push_frame=push)
         session.response_task = asyncio.create_task(session._respond(None, "Haan bolo"))
         await asyncio.wait_for(waiting.wait(), 2)
         await session.interrupt()
@@ -414,8 +459,7 @@ def test_leave_during_signaling_does_not_start_pipeline(client, settings, monkey
     from pipecat.transports.smallwebrtc import connection
 
     settings.voice_enabled = True
-    settings.deepgram_api_key = settings.murf_api_key = settings.openrouter_api_key = "test"
-    settings.murf_voice_id = "test"
+    settings.deepgram_api_key = settings.cartesia_api_key = settings.openrouter_api_key = "test"
     sign_in(client)
     identifier = uuid4()
     assert (

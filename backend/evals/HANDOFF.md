@@ -25,10 +25,10 @@ The authorised Luna v7 suite completed all four development cases: 50/50 calls,
 and approval; no further suite is authorised.
 Fresh holdouts have not run and must remain reserved until approval.
 
-Switch app models with `SAARTHI_MODEL = "minimax"` or `"luna"` near the top of
+Switch app models with `SAARTHI_MODEL = "gemma"` or `"luna"` near the top of
 `backend/config.py`, then restart. This selects model/provider/effort together.
 Environment overrides still take precedence; local legacy model overrides were
-commented out so the switch works. App defaults remain MiniMax; app prompt remains
+commented out so the switch works. App defaults are Luna at low effort; app prompt remains
 v4 pending candidate review. Eval model/prompt are explicitly recorded separately.
 
 ## Historical notes / earlier plan
@@ -132,9 +132,8 @@ five simulated users). Ordinary six-user-turn cases have 13 messages and 13 call
   error_id and 504 timeout or 502 otherwise; supports same-message-ID user retry
   without duplicate messages. Diagnostics did not change that recovery contract.
 
-Current Settings defaults: model `openrouter/minimax/minimax-m3.1-flash:free`, timeout
-60s, output cap 4096, effort provider_default. Explicit effort applies to Saarthi and
-eval_user only; Doval remains provider_default. ADK translates the cap into LiteLLM
+Current Settings defaults: model `openrouter/openai/gpt-6-luna`, timeout
+60s, output cap 4096, low effort for Saarthi, Doval and eval_user. ADK translates the cap into LiteLLM
 max_completion_tokens. Reasoning can consume it before a visible answer. Completion
 usage includes reasoning on this adapter: do not add reasoning again.
 
@@ -375,7 +374,7 @@ check assistant replies only, not fixture JSON that deliberately contains it.
 ## Useful existing commands (run from backend/)
 
 ```sh
-uv sync --locked --group evals
+uv sync --locked --extra voice --group evals
 uv run --group evals python -m evals list
 uv run --group evals python -m evals list --scenarios evals/stress-scenarios.json
 

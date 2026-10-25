@@ -21,10 +21,10 @@ The authorised Luna v7 suite completed all four development cases: 50/50 calls,
 and approval; no further suite is authorised.
 Fresh holdouts have not run and must remain reserved until approval.
 
-Switch app models with `SAARTHI_MODEL = "minimax"` or `"luna"` near the top of
+Switch app models with `SAARTHI_MODEL = "gemma"` or `"luna"` near the top of
 `backend/config.py`, then restart. This selects model/provider/effort together.
 Environment overrides still take precedence; local legacy model overrides were
-commented out so the switch works. App defaults remain MiniMax; app prompt remains
+commented out so the switch works. App defaults are Luna at low effort; app prompt remains
 v4 pending candidate review. Eval model/prompt are explicitly recorded separately.
 
 ## Historical notes / earlier plan
@@ -89,8 +89,9 @@ comparison, temperature comparison, or larger-cap comparison has been completed.
   explicit meaning. No model/effort/provider cause has been isolated.
 
 Earlier runs with no effort override used provider_default; do not label their
-actual effort as a known measured value. The app still defaults to provider_default;
-medium was an explicit eval override. Doval effort was not changed.
+actual effort as a known measured value. The app currently uses Luna at low effort
+for both agents; earlier conversational suites used provider_default or explicit
+eval overrides.
 
 ## What the evidence does and does not establish
 

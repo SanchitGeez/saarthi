@@ -2,11 +2,22 @@
 
 Updated: 2026-10-20. Status: browser voice implementation on `feat/voice-module`;
 provider/acoustic acceptance testing remains open.
+Voice interruption fix: [cause, changes and manual acceptance checks](voice-pipeline-bug-2026-10-25.md)
+(implemented 2026-10-25; real microphone acceptance pending).
 This is the maintained voice design. Update decisions and unresolved questions as
 the discussion progresses. Recommendations below are proposals, not approvals.
 The existing v2 spec describes the text application. The implementation record
 below supersedes earlier proposals where they differ.
 
+
+## TTS provider switch (2026-10-25)
+
+The active pipeline now uses Cartesia Sonic-3 with Rohan - Steady Communicator
+(`4877b818-c7fe-4c89-b1cf-eadf8e23da72`), verified through the voices API.
+`backend/voice/cartesia.py` preserves word end timing, generation fences, bounded
+audio lead and session-owned retries. Set `CARTESIA_API_KEY`; the Rohan voice ID
+is the default. Murf's module, settings and dependency remain intact. Earlier
+Murf-specific implementation details below describe the prior provider.
 
 ## Implementation record (2026-10-20)
 

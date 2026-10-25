@@ -62,10 +62,10 @@ def test_pinned_adk_litellm_uses_native_schema_without_tools(monkeypatch):
         assert changes.summary == ["Discussed work."]
     assert len(calls) == 2
     for call in calls:
-        assert call["model"] == "openrouter/minimax/minimax-m3.1-flash:free"
+        assert call["model"] == "openrouter/openai/gpt-6-luna"
         assert call["api_key"] == "test-key"
         assert not call.get("tools") and not call.get("functions")
-        assert "reasoning_effort" not in call  # Doval keeps its existing provider behaviour.
+        assert call["reasoning_effort"] == "low"
         assert call["response_format"]["type"] == "json_schema"
         assert call["response_format"]["json_schema"]["strict"] is True
         assert call["response_format"]["json_schema"]["schema"]["additionalProperties"] is False

@@ -1,20 +1,20 @@
 # Browser voice
 
 Local, hands-free voice using WebRTC, Pipecat, Deepgram Nova-3 multilingual,
-Saarthi's existing ADK agent and Murf Falcon 2. Expo/mobile is outside this module.
+Saarthi's existing ADK agent and Cartesia Sonic-3 (Rohan). Expo/mobile is outside this module.
 
 ## Run
 
 From `backend/`:
 
 ```sh
-uv sync --locked --extra voice --python 3.12
+uv sync --locked --extra voice
 uv run alembic upgrade head
 # Set these in backend/.env (see .env.example):
 # VOICE_ENABLED=true
 # DEEPGRAM_API_KEY=...
-# MURF_API_KEY=...
-# MURF_VOICE_ID=<your Falcon 2 eligible Hindi/English voice>
+# CARTESIA_API_KEY=...
+# CARTESIA_VOICE_ID=4877b818-c7fe-4c89-b1cf-eadf8e23da72 # optional; Rohan is the default
 # OPENROUTER_API_KEY=...
 uv run uvicorn main:app --host 127.0.0.1 --port 8000
 ```
@@ -24,8 +24,8 @@ Allow microphone access. If playback is blocked, use **Play audio**. **Leave voi
 restores typing; it does not end the conversation. **Stop speaking** cancels the
 current reply while the microphone stays live. **Mute microphone** is explicit.
 Voice defaults off and returns an actionable error when keys or the voice ID are
-missing. Audition a suitable voice in your Murf account; no arbitrary voice is
-selected for your application.
+missing. The default voice is Rohan - Steady Communicator (Hindi), verified via
+Cartesia's voices API. Murf's adapter and settings remain available in the codebase.
 
 Use one Uvicorn worker for this local release. Database leases prevent duplicate
 owners across workers, but live signaling requires the owning process. Local
@@ -41,13 +41,14 @@ Python 3.11+ support and do not import the optional media dependencies.
 - `pipeline.py`: Silero VAD, Smart Turn v3.2, STT, interruption policy, output fencing.
 - `session.py`: one reply at a time, cancellation, delivery, retries and cleanup.
 - `deepgram.py`: bounded recovery replacing the adapter's unlimited loop.
-- `murf.py`: official adapter extension for word timings, bounded audio lead and
-  coordinated retries; token mode lets Falcon perform sentence chunking once.
+- `cartesia.py`: active streaming adapter with word end timings, bounded audio
+  lead, generation fences and coordinated turn retries.
+- `murf.py`: retained Murf adapter; not used by the active pipeline.
 - `policy.py`: acknowledgment normalization and conservative original-text prefixes.
 - `client/voice.js`: microphone, WebRTC, playback, captions, reconnect and teardown.
 
-STT receives Hindi/English code-switching audio. Agent output and captions remain
-Romanized Hinglish without transliteration. Smart Turn is the completion authority;
+STT receives Hindi/English code-switching audio. Agent output and captions use Devanagari for Hindi words
+and Latin script for English words, following the shared Saarthi prompt. Smart Turn is the completion authority;
 Deepgram endpointing is disabled. VAD starts a candidate interruption. Recognized
 speech other than a standalone acknowledgment cancels immediately; continuing
 unrecognized speech cancels after 1.2s. Short `haan/hmm/achha` during output is
@@ -84,7 +85,7 @@ one check-in after 30s silence, disconnect after 120s silence, hard safety cap 2
 The usual 5–10min call is not a hard cutoff. These are tuning defaults, not measured
 latency promises. At most 10 sessions per worker are allowed.
 
-Murf's generated audio lead is bounded to roughly 5s plus the provider's current
+Cartesia's generated audio lead is bounded to roughly 5s plus the provider's current
 WebSocket frame/queue. Each synthesis attempt is capped at 120s of audio. Incoming
 Smart Turn audio is bounded by the framework's eight-second rolling window.
 No audio is saved to disk or database, including debug recordings. The application
@@ -92,7 +93,7 @@ disables provider/framework Loguru namespaces and rejects Smart Turn audio loggi
 Provider retention policies are separate; Deepgram model-improvement opt-out is
 requested, which is not a zero-retention guarantee.
 
-Delivery uses Murf word end times against audio sent at real-time pace with a
+Delivery uses Cartesia word end times against audio sent at real-time pace with a
 350ms margin. Normalization mismatch (e.g. `50` vs `fifty`) freezes alignment at the
 last matching prefix. Missing timestamps may yield no partial transcript. Successful
 full playback commits the complete reply. Browser mute/jitter/route changes mean
@@ -106,6 +107,7 @@ TEST_DATABASE_URL=postgresql+psycopg://saarthi:saarthi@localhost:5432/saarthi uv
 uv run ruff check .
 uv run ruff format --check .
 node --check ../client/voice.js
+node --test ../client/tests/*.test.cjs
 ```
 
 Tests include ownership/lease expiry, late writes, interrupted context, checkpoints,
@@ -114,7 +116,7 @@ ADK streaming and synthetic WebRTC audio between two peers. Browser QA uses a fa
 microphone and fake provider boundaries; it is not a real-provider/acoustic test.
 
 Before calling speakerphone support accepted, manually test Hindi, English and
-mixed Hinglish with the selected Murf voice; unfinished thoughts and short answers;
+mixed Hinglish with the Rohan voice; unfinished thoughts and short answers;
 `hmm` vs `ruko` vs `haan lekin`; loud output with no speech (no self-trigger); actual
 speech over output at different volumes/distances; mute/unmute; Wi-Fi loss; Leave
 while connecting/retrying/speaking; a second tab; account expiration and reconnect.

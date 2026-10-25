@@ -50,13 +50,13 @@ async def start(body: Start, request: Request, user=Depends(onboarded)):
     if not all(
         (
             settings.deepgram_api_key,
-            settings.murf_api_key,
+            settings.cartesia_api_key,
             settings.openrouter_api_key,
-            settings.murf_voice_id,
+            settings.cartesia_voice_id,
         )
     ):
         raise Problem(
-            503, "voice_not_configured", "Configure the voice provider keys and Murf voice ID."
+            503, "voice_not_configured", "Configure the voice provider keys and Cartesia voice ID."
         )
     existing = sessions(request).get(body.id)
     if existing:

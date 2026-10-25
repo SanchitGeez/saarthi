@@ -31,7 +31,7 @@ class FakeSTT(FrameProcessor):
 
 
 class FakeTTS(FrameProcessor):
-    InputParams = pipeline.TimedMurf.InputParams
+    Settings = pipeline.TimedCartesia.Settings
 
     def __init__(self, session, **kwargs):
         super().__init__()
@@ -55,7 +55,7 @@ def test_browser_peer_receives_audio_and_final_caption(monkeypatch):
     from pipecat.transports.smallwebrtc.connection import SmallWebRTCConnection
 
     monkeypatch.setattr(pipeline, "DeepgramSTTService", FakeSTT)
-    monkeypatch.setattr(pipeline, "TimedMurf", FakeTTS)
+    monkeypatch.setattr(pipeline, "TimedCartesia", FakeTTS)
     monkeypatch.setattr(
         service,
         "get_conversation",
@@ -100,7 +100,10 @@ def test_browser_peer_receives_audio_and_final_caption(monkeypatch):
         session = VoiceSession(
             None,
             Settings(
-                _env_file=None, deepgram_api_key="test", murf_api_key="test", murf_voice_id="test"
+                _env_file=None,
+                deepgram_api_key="test",
+                cartesia_api_key="test",
+                cartesia_voice_id="test",
             ),
             uuid4(),
             uuid4(),

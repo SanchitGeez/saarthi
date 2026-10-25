@@ -84,18 +84,34 @@ class VoiceSession:
                 if text
                 else None
             )
+            if text:
+                self.event(
+                    "user_turn",
+                    conversation_id=str(self.conversation_id),
+                    message_id=str(self.message_id),
+                    text=text,
+                )
             self.heard = ""
             self.response_task = asyncio.create_task(self._respond(payload, fixed))
 
     async def interrupt(self):
         async with self.lock:
-            await self._interrupt()
+            # A cancelled VAD fallback must still finish stopping and saving the reply.
+            interruption = asyncio.create_task(self._interrupt())
+            try:
+                await asyncio.shield(interruption)
+            except asyncio.CancelledError:
+                await interruption
+                raise
 
     async def _clear_output(self):
+        from pipecat.frames.frames import InterruptionFrame
+
         self.event("clear", response_id=self.response_id)
         self.response_id = None  # Fence provider callbacks before cancelling queues.
         if self.agent:
-            await self.agent.broadcast_interruption()
+            # Clear output only: upstream cancellation can discard the user's transcript.
+            await self.agent.push_frame(InterruptionFrame())
             # Let downstream system-frame handlers flush before accepting a new response.
             await asyncio.sleep(0.05)
 

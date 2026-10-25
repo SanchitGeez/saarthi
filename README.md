@@ -10,15 +10,15 @@ private data. `ENVIRONMENT=production` refuses startup until mock auth is replac
 
 ## Run locally
 
-Requires Python 3.11+, [uv](https://docs.astral.sh/uv/), and Docker Compose (or a
-local PostgreSQL 16 database).
+The backend environment is pinned to Python 3.12 by `backend/.python-version`.
+Install it with [uv](https://docs.astral.sh/uv/) and Docker Compose (or local PostgreSQL 16).
 
 ```sh
 docker compose up -d db
 cd backend
 cp .env.example .env
 # Put your OpenRouter key in backend/.env: OPENROUTER_API_KEY=...
-uv sync --locked
+uv sync --locked --extra voice
 uv run alembic upgrade head
 uv run uvicorn main:app --reload
 ```
@@ -39,8 +39,8 @@ records. All routes enforce ownership and onboarding.
 Without `OPENROUTER_API_KEY`, login/onboarding and knowledge controls work; generation
 returns a recoverable error. There are no fake model replies in the application.
 Change `SAARTHI_MODEL` near the top of [backend/config.py](backend/config.py) to
-`"minimax"` for development or `"luna"` for quality testing, then restart the backend.
-The preset selects model/provider/effort together (Doval retains default effort).
+`"gemma"` for free development or `"luna"` for GPT-6 Luna at low effort, then restart.
+Luna is the current selection and is billed at OpenRouter's listed rate.
 Leave `AGENT_MODEL`, `AGENT_PROVIDER`, and `AGENT_REASONING_EFFORT` unset to use
 the switch; explicit environment settings override it.
 The key stays on the server. Live language, Gita and extraction quality still need
@@ -48,10 +48,10 @@ evaluation with your key; schema transport is tested locally through ADK/LiteLLM
 
 ## Optional browser voice
 
-The new [`backend/voice`](backend/voice/README.md) module connects Deepgram STT,
-Pipecat, the existing Saarthi agent, and Murf TTS over browser WebRTC. Install with
-`uv sync --locked --extra voice --python 3.12`, migrate the database, and configure
-the voice keys/voice ID in `.env.example`. Voice is disabled by default.
+The [`backend/voice`](backend/voice/README.md) module connects Deepgram STT,
+Pipecat, the existing Saarthi agent, and Cartesia TTS (Rohan) over browser WebRTC. Its packages
+are included in the Python 3.12 environment above; configure the voice keys in
+`.env`. Rohan is the default voice; Murf remains available in the codebase. Voice is disabled by default.
 See the module README for setup, recovery behavior and required microphone tests,
 and [the maintained architecture](docs/voice-architecture.md) for design decisions.
 
@@ -59,7 +59,7 @@ and [the maintained architecture](docs/voice-architecture.md) for design decisio
 
 ```sh
 cd backend
-uv sync --locked
+uv sync --locked --extra voice
 # Uses a temporary schema; never truncates application tables outside that schema.
 TEST_DATABASE_URL=postgresql+psycopg://saarthi:saarthi@localhost:5432/saarthi uv run pytest -q
 uv run ruff check .
@@ -83,7 +83,7 @@ See [working spec](docs/saarthi-v2-spec.md) and
 For full-conversation experiments using the real Saarthi agent, adaptive DeepEval
 users, local human/Codex review and prompt comparison, see
 [the separate evals module](backend/evals/README.md). Its dependencies are optional
-(`uv sync --locked --group evals`); the web application does not import it.
+(`uv sync --locked --extra voice --group evals`); the web application does not import it.
 
 ## Mobile and archive
 

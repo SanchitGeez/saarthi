@@ -26,6 +26,7 @@ from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.processors.audio.vad_processor import VADProcessor
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 from pipecat.services.tts_service import TextAggregationMode
+from pipecat.transcriptions.language import Language
 from pipecat.transports.base_transport import TransportParams
 from pipecat.transports.smallwebrtc.transport import SmallWebRTCTransport
 from pipecat.turns.user_start import TranscriptionUserTurnStartStrategy, VADUserTurnStartStrategy
@@ -34,8 +35,8 @@ from pipecat.turns.user_turn_processor import UserTurnProcessor
 from pipecat.turns.user_turn_strategies import UserTurnStrategies
 from pipecat.utils.env import env_truthy
 
+from voice.cartesia import TimedCartesia
 from voice.deepgram import BoundedDeepgram as DeepgramSTTService
-from voice.murf import TimedMurf
 from voice.policy import acknowledgment
 
 
@@ -61,8 +62,15 @@ class CaptureTurn(FrameProcessor):
             if isinstance(frame, VADUserStartedSpeakingFrame):
                 self.session.activity = monotonic()
                 self.overlap = self.overlap or bool(
-                    self.session.response_task and not self.session.response_task.done()
+                    self.session.delivery and self.session.delivery.sent_seconds > 0
                 )
+                if (
+                    self.session.response_task
+                    and not self.session.response_task.done()
+                    and not (self.session.delivery and self.session.delivery.sent_seconds > 0)
+                ):
+                    # Resumed speech must stop a pending reply before it becomes audible.
+                    await self.session.interrupt()
                 if self.fallback:
                     self.fallback.cancel()
                 self.fallback = asyncio.create_task(self._fallback())
@@ -73,19 +81,14 @@ class CaptureTurn(FrameProcessor):
             elif isinstance(frame, (TranscriptionFrame, InterimTranscriptionFrame)):
                 self.session.activity = monotonic()
                 self.overlap = self.overlap or bool(
-                    self.session.response_task and not self.session.response_task.done()
+                    self.session.delivery and self.session.delivery.sent_seconds > 0
                 )
+                text = " ".join([*self.parts, frame.text])
                 self.session.event(
                     "transcript",
-                    text=" ".join([*self.parts, frame.text]),
+                    text=text,
                     final=isinstance(frame, TranscriptionFrame),
                 )
-                if (
-                    self.session.response_task
-                    and not self.session.response_task.done()
-                    and not acknowledgment(" ".join([*self.parts, frame.text]))
-                ):
-                    await self.session.interrupt()
                 if isinstance(frame, TranscriptionFrame):
                     self.parts.append(frame.text)
                     if len(" ".join(self.parts)) > 4000:
@@ -94,6 +97,12 @@ class CaptureTurn(FrameProcessor):
                             "error",
                             message="That turn is too long. Please say it in smaller parts.",
                         )
+                if (
+                    self.session.response_task
+                    and not self.session.response_task.done()
+                    and not acknowledgment(text)
+                ):
+                    await self.session.interrupt()
         await self.push_frame(frame, direction)
 
     async def _fallback(self):
@@ -205,16 +214,15 @@ async def build(session, connection):
         )
     )
     agent = AgentOutput()
-    tts = TimedMurf(
+    tts = TimedCartesia(
         session,
-        api_key=session.settings.murf_api_key,
-        params=TimedMurf.InputParams(
-            voice_id=session.settings.murf_voice_id,
-            model="falcon-2",
-            sample_rate=24000,
-            format="PCM",
-            style="Conversational",
+        api_key=session.settings.cartesia_api_key,
+        settings=TimedCartesia.Settings(
+            voice=session.settings.cartesia_voice_id,
+            model="sonic-3",
+            language=Language.HI,
         ),
+        sample_rate=24000,
         text_aggregation_mode=TextAggregationMode.TOKEN,
     )
     session.agent, session.tts, session.connection = agent, tts, connection

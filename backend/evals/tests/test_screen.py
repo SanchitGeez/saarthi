@@ -221,7 +221,12 @@ def test_luna_omits_temperature_without_eval_hooks(monkeypatch):
         )
 
     monkeypatch.setattr(LiteLLMClient, "acompletion", completion)
-    settings = Settings(_env_file=None, openrouter_api_key="test", agent_model=candidate()["model"])
+    settings = Settings(
+        _env_file=None,
+        openrouter_api_key="test",
+        agent_model=candidate()["model"],
+        agent_provider=None,
+    )
     assert asyncio.run(runner.invoke(settings, "saarthi", "prompt", {})) == "Theek."
     assert "temperature" not in calls[0]
     assert "extra_body" not in calls[0]

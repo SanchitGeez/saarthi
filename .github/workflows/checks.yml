@@ -42,3 +42,4 @@ jobs:
       - run: uv run pytest -q tests evals/tests
       - run: node --check ../client/app.js
       - run: node --check ../client/voice.js
+      - run: node --test ../client/tests/*.test.cjs

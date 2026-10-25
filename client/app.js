@@ -1,5 +1,6 @@
 const $ = id => document.getElementById(id);
 const state = { user: null, current: null, history: [], cursor: null, active: null, busy: false, edit: null };
+let chatRequest = 0;
 function text(tag, value) { const node = document.createElement(tag); node.textContent = value; return node; }
 function visible(id, value) { $(id).hidden = !value; }
 async function api(path, options = {}) {
@@ -47,7 +48,10 @@ function renderHistory() {
 }
 async function openChat(id) {
   if (saarthiVoice.active && state.current?.conversation.id !== id) await saarthiVoice.stop();
-  state.current = await api(`/conversations/${id}`);
+  const request = ++chatRequest;
+  const current = await api(`/conversations/${id}`);
+  if (request !== chatRequest || !state.user) return;
+  state.current = current;
   visible('chat', true); visible('knowledge-panel', false);
   renderChat(); renderHistory();
 }
@@ -98,6 +102,7 @@ $('profile-form').onsubmit = event => { event.preventDefault(); action('Saving p
   await enter();
 }); };
 function resetSession() {
+  ++chatRequest;
   if (saarthiVoice.active) saarthiVoice.stop();
   state.user = null; state.current = null; state.history = []; state.active = null; state.cursor = null;
   $('message').value = ''; $('profile-form').reset(); resetKnowledgeForm();
@@ -180,6 +185,15 @@ $('voice-toggle').onclick = () => {
 window.addEventListener('voicechange', () => {
   $('voice-toggle').textContent = saarthiVoice.active ? 'Leave voice' : 'Start voice';
   visible('voice-stop-speaking', saarthiVoice.active); visible('voice-mute', saarthiVoice.active);
+  renderChat();
+});
+window.addEventListener('voiceuser', ({ detail }) => {
+  if (!state.user || state.current?.conversation.id !== detail.conversation_id) return;
+  // The server emits this only after committing the user message.
+  ++chatRequest;
+  if (!state.current.messages.some(message => message.id === detail.message_id)) {
+    state.current.messages.push({ id: detail.message_id, role: 'user', content: detail.text, delivery_status: 'complete' });
+  }
   renderChat();
 });
 window.addEventListener('voicefinal', async () => {

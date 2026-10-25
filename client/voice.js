@@ -2,9 +2,14 @@
 window.saarthiVoice = (() => {
   let active = false, epoch = 0, peer, channel, stream, sessionId, keepalive;
   let retries = 0, conversationId, reconnecting = false, responseId, connecting = false;
+  let liveTranscript = '';
   const audio = document.getElementById('voice-audio');
   const status = value => { document.getElementById('voice-status').textContent = value; };
   const captions = value => { document.getElementById('voice-caption').textContent = value; };
+  const transcript = value => {
+    liveTranscript = value;
+    document.getElementById('voice-transcript').textContent = value ? `Live speech: ${value}` : '';
+  };
   const emit = () => window.dispatchEvent(new CustomEvent('voicechange', { detail: { active } }));
   async function request(path, method, body) {
     const response = await fetch(path, { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
@@ -28,7 +33,7 @@ window.saarthiVoice = (() => {
   }
   async function stop() {
     ++epoch; active = false; connecting = false;
-    emit(); status('Leaving voice…'); captions('');
+    emit(); status('Leaving voice…'); captions(''); transcript('');
     await cleanup(); status('Voice off. Your chat is still active.');
     window.dispatchEvent(new Event('voicefinal'));
   }
@@ -41,7 +46,11 @@ window.saarthiVoice = (() => {
         status('Saarthi is responding…');
         break;
       case 'caption': captions(message.text); break;
-      case 'transcript': document.getElementById('voice-transcript').textContent = message.text; status('Listening…'); break;
+      case 'transcript': transcript(message.text); status('Listening…'); break;
+      case 'user_turn':
+        if (liveTranscript.trim() === message.text.trim()) transcript('');
+        window.dispatchEvent(new CustomEvent('voiceuser', { detail: message }));
+        break;
       case 'clear': {
         const old = responseId; audio.muted = true;
         // Bounded WebRTC jitter tail; server also clears synthesis and media queues.
@@ -125,7 +134,7 @@ window.saarthiVoice = (() => {
   async function start(id) {
     if (active) return;
     if (!window.isSecureContext || !navigator.mediaDevices) { status('Voice needs localhost or HTTPS and microphone access.'); return; }
-    active = true; retries = 0; conversationId = id; const currentEpoch = ++epoch; emit();
+    active = true; retries = 0; conversationId = id; transcript(''); const currentEpoch = ++epoch; emit();
     try { await connect(currentEpoch, false); }
     catch (error) {
       if (currentEpoch !== epoch) return;

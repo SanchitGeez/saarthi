@@ -1,0 +1,185 @@
+[
+  {
+    "id": "roman-hindi",
+    "origin": "synthetic script-adherence development fixture",
+    "expected_behavior": [
+      "Write all Hindi words in Devanagari and all English words in Latin script.",
+      "Follow the language preference; English-only stays English. Script requests do not override the script rule."
+    ],
+    "transport": "text",
+    "payload": {
+      "profile": {
+        "name": "Aman",
+        "gender": "Prefer not to say",
+        "age": 26
+      },
+      "knowledge": [],
+      "latest_summary": null,
+      "opening": false,
+      "transcript": [
+        {
+          "role": "user",
+          "content": "Aaj bahut ghabrahat ho rahi hai, lagta hai sab mujhse aage nikal gaye."
+        }
+      ]
+    }
+  },
+  {
+    "id": "mixed-work",
+    "origin": "synthetic script-adherence development fixture",
+    "expected_behavior": [
+      "Write all Hindi words in Devanagari and all English words in Latin script.",
+      "Follow the language preference; English-only stays English. Script requests do not override the script rule."
+    ],
+    "transport": "text",
+    "payload": {
+      "profile": {
+        "name": "Aman",
+        "gender": "Prefer not to say",
+        "age": 26
+      },
+      "knowledge": [],
+      "latest_summary": null,
+      "opening": false,
+      "transcript": [
+        {
+          "role": "user",
+          "content": "मेरे project पर manager का feedback अच्छा नहीं था। मुझे लगता है मैं इस job के लायक नहीं हूँ।"
+        }
+      ]
+    }
+  },
+  {
+    "id": "hindi-script",
+    "origin": "synthetic script-adherence development fixture",
+    "expected_behavior": [
+      "Write all Hindi words in Devanagari and all English words in Latin script.",
+      "Follow the language preference; English-only stays English. Script requests do not override the script rule."
+    ],
+    "transport": "text",
+    "payload": {
+      "profile": {
+        "name": "Aman",
+        "gender": "Prefer not to say",
+        "age": 26
+      },
+      "knowledge": [],
+      "latest_summary": null,
+      "opening": false,
+      "transcript": [
+        {
+          "role": "user",
+          "content": "गीता के अनुसार कर्म करते हुए फल की चिंता कैसे छोड़ूँ? आसान हिंदी में समझाओ।"
+        }
+      ]
+    }
+  },
+  {
+    "id": "english-only",
+    "origin": "synthetic script-adherence development fixture",
+    "expected_behavior": [
+      "Write all Hindi words in Devanagari and all English words in Latin script.",
+      "Follow the language preference; English-only stays English. Script requests do not override the script rule."
+    ],
+    "transport": "text",
+    "payload": {
+      "profile": {
+        "name": "Aman",
+        "gender": "Prefer not to say",
+        "age": 26
+      },
+      "knowledge": [],
+      "latest_summary": null,
+      "opening": false,
+      "transcript": [
+        {
+          "role": "user",
+          "content": "Please reply only in English. How can I care about my work without tying my self-worth to the result?"
+        }
+      ]
+    }
+  },
+  {
+    "id": "legacy-roman-history",
+    "origin": "synthetic script-adherence development fixture",
+    "expected_behavior": [
+      "Write all Hindi words in Devanagari and all English words in Latin script.",
+      "Follow the language preference; English-only stays English. Script requests do not override the script rule."
+    ],
+    "transport": "text",
+    "payload": {
+      "profile": {
+        "name": "Aman",
+        "gender": "Prefer not to say",
+        "age": 26
+      },
+      "knowledge": [],
+      "latest_summary": null,
+      "opening": false,
+      "transcript": [
+        {
+          "role": "user",
+          "content": "Mujhe project share karne se darr lag raha hai."
+        },
+        {
+          "role": "assistant",
+          "content": "Tumhe kis baat ka sabse zyada darr hai?"
+        },
+        {
+          "role": "user",
+          "content": "Haan, par project ka feedback kharab aaya toh?"
+        }
+      ]
+    }
+  },
+  {
+    "id": "roman-script-request",
+    "origin": "synthetic script-adherence development fixture",
+    "expected_behavior": [
+      "Write all Hindi words in Devanagari and all English words in Latin script.",
+      "Follow the language preference; English-only stays English. Script requests do not override the script rule."
+    ],
+    "transport": "text",
+    "payload": {
+      "profile": {
+        "name": "Aman",
+        "gender": "Prefer not to say",
+        "age": 26
+      },
+      "knowledge": [],
+      "latest_summary": null,
+      "opening": false,
+      "transcript": [
+        {
+          "role": "user",
+          "content": "Hindi mein baat karo lekin sirf Roman letters mein likho. Aaj mera interview achha gaya!"
+        }
+      ]
+    }
+  },
+  {
+    "id": "voice-mixed",
+    "origin": "synthetic script-adherence development fixture",
+    "expected_behavior": [
+      "Write all Hindi words in Devanagari and all English words in Latin script.",
+      "Follow the language preference; English-only stays English. Script requests do not override the script rule."
+    ],
+    "transport": "voice",
+    "payload": {
+      "profile": {
+        "name": "Aman",
+        "gender": "Prefer not to say",
+        "age": 26
+      },
+      "knowledge": [],
+      "latest_summary": null,
+      "opening": false,
+      "transcript": [
+        {
+          "role": "user",
+          "content": "Meri team ne project launch kar diya! Ab bas email aur feedback ka intezaar hai."
+        }
+      ]
+    }
+  }
+]

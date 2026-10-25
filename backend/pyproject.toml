@@ -15,7 +15,7 @@ dependencies = [
 
 [project.optional-dependencies]
 voice = [
-    "pipecat-ai[deepgram,webrtc]==0.0.108",
+    "pipecat-ai[cartesia,deepgram,webrtc]==0.0.108",
     "pipecat-murf-tts==0.2.6",
 ]
 
